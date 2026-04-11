@@ -8,9 +8,14 @@ export const apiModels = [
   { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', inputPrice: 0.55, outputPrice: 2.19 },
   { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', inputPrice: 0.14, outputPrice: 0.28 },
   { id: 'llama-3-3-70b', name: 'Llama 3.3 70B (Meta)', provider: 'Meta', inputPrice: 0.50, outputPrice: 0.50 },
+  { id: 'llama-3-1-405b', name: 'Llama 3.1 405B', provider: 'Meta', inputPrice: 2.00, outputPrice: 2.00 },
   { id: 'qwen-2-5-72b', name: 'Qwen 2.5 72B', provider: 'Alibaba', inputPrice: 0.40, outputPrice: 0.40 },
   { id: 'mistral-large-2', name: 'Mistral Large 2', provider: 'Mistral', inputPrice: 2.00, outputPrice: 6.00 },
+  { id: 'codestral', name: 'Codestral', provider: 'Mistral', inputPrice: 0.20, outputPrice: 0.60 },
   { id: 'sonar-pro', name: 'Sonar Pro', provider: 'Perplexity', inputPrice: 1.00, outputPrice: 1.00 },
+  { id: 'o1', name: 'o1', provider: 'OpenAI', inputPrice: 15.00, outputPrice: 60.00 },
+  { id: 'o3-mini', name: 'o3-mini', provider: 'OpenAI', inputPrice: 1.10, outputPrice: 4.40 },
+  { id: 'grok-3', name: 'Grok 3', provider: 'xAI', inputPrice: 2.00, outputPrice: 10.00 },
 ];
 
 export const subscriptions = [
@@ -115,7 +120,7 @@ export const subscriptions = [
   }
 ];
 
-export const providers = ['All', 'OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'Meta', 'Mistral', 'Alibaba', 'Perplexity', 'Cursor'];
+export const providers = ['All', 'OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'Meta', 'Mistral', 'Alibaba', 'Perplexity', 'xAI', 'Cursor'];
 
 /*
   Token ratio guidance:
