@@ -5,6 +5,12 @@ export const apiModels = [
   { id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', provider: 'Anthropic', inputPrice: 1.00, outputPrice: 5.00 },
   { id: 'gemini-3-1-pro', name: 'Gemini 3.1 Pro Preview', provider: 'Google', inputPrice: 2.00, outputPrice: 12.00 },
   { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', inputPrice: 1.25, outputPrice: 10.00 },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', provider: 'DeepSeek', inputPrice: 0.55, outputPrice: 2.19 },
+  { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', inputPrice: 0.14, outputPrice: 0.28 },
+  { id: 'llama-3-3-70b', name: 'Llama 3.3 70B (Meta)', provider: 'Meta', inputPrice: 0.50, outputPrice: 0.50 },
+  { id: 'qwen-2-5-72b', name: 'Qwen 2.5 72B', provider: 'Alibaba', inputPrice: 0.40, outputPrice: 0.40 },
+  { id: 'mistral-large-2', name: 'Mistral Large 2', provider: 'Mistral', inputPrice: 2.00, outputPrice: 6.00 },
+  { id: 'sonar-pro', name: 'Sonar Pro', provider: 'Perplexity', inputPrice: 1.00, outputPrice: 1.00 },
 ];
 
 export const subscriptions = [
@@ -109,7 +115,7 @@ export const subscriptions = [
   }
 ];
 
-export const providers = ['All', 'OpenAI', 'Anthropic', 'Google', 'Cursor'];
+export const providers = ['All', 'OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'Meta', 'Mistral', 'Alibaba', 'Perplexity', 'Cursor'];
 
 /*
   Token ratio guidance:
