@@ -3,7 +3,7 @@ import {
   Calculator, Zap, Coffee, Code2, User, TrendingDown,
   Settings, DollarSign, Activity, AlertTriangle, CheckCircle2,
   Info, RotateCcw, Trophy, BarChart3, Shield, ArrowDown,
-  FileCode, ChevronDown, ChevronUp, X
+  FileCode, ChevronDown, ChevronUp, X, Search, PenTool, BarChart2
 } from 'lucide-react';
 import { apiModels, subscriptions, usageProfiles, providers, examplePrompts } from './data/pricingModels';
 import './App.css';
@@ -131,7 +131,7 @@ function App() {
         </p>
         <div className="hero-stats">
           <div className="hero-stat">
-            <div className="hero-stat-value">6</div>
+            <div className="hero-stat-value">17</div>
             <div className="hero-stat-label">API Models Compared</div>
           </div>
           <div className="hero-stat">
@@ -139,8 +139,8 @@ function App() {
             <div className="hero-stat-label">Subscription Plans</div>
           </div>
           <div className="hero-stat">
-            <div className="hero-stat-value">3</div>
-            <div className="hero-stat-label">Confidence Tiers</div>
+            <div className="hero-stat-value">5</div>
+            <div className="hero-stat-label">User Profiles</div>
           </div>
         </div>
         <div className="hero-cta">
@@ -195,16 +195,30 @@ function App() {
             </div>
 
             <div className="input-group">
-              <Tip icon={User} label="Developer Profile" 
-                tooltip="Presets that auto-fill usage numbers. Vibe = light chat coding. Heavy = agentic repo-wide work." />
-              <div className="toggle-group">
+              <Tip icon={User} label="User Profile" 
+                tooltip="Presets that auto-fill usage numbers based on your typical workflow. Pick the closest match to your role." />
+              <div className="toggle-group profile-grid">
                 <button className={`toggle-btn ${profile==='vibe'?'active':''}`} onClick={()=>setProfile('vibe')}>
-                  <Coffee size={16}/> Vibe
+                  <Coffee size={14}/> Vibe Coder
                 </button>
                 <button className={`toggle-btn ${profile==='heavy'?'active':''}`} onClick={()=>setProfile('heavy')}>
-                  <Code2 size={16}/> Heavy
+                  <Code2 size={14}/> Heavy Coder
+                </button>
+                <button className={`toggle-btn ${profile==='researcher'?'active':''}`} onClick={()=>setProfile('researcher')}>
+                  <Search size={14}/> Researcher
+                </button>
+                <button className={`toggle-btn ${profile==='marketer'?'active':''}`} onClick={()=>setProfile('marketer')}>
+                  <PenTool size={14}/> Marketer
+                </button>
+                <button className={`toggle-btn ${profile==='analyst'?'active':''}`} onClick={()=>setProfile('analyst')}>
+                  <BarChart2 size={14}/> Analyst
                 </button>
               </div>
+              {usageProfiles[profile] && (
+                <p style={{fontSize:'0.72rem', color:'var(--text-secondary)', marginTop:'0.4rem', lineHeight:1.4}}>
+                  {usageProfiles[profile].description}
+                </p>
+              )}
             </div>
 
             <div className="input-group">

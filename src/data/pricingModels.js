@@ -136,6 +136,7 @@ export const providers = ['All', 'OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'M
 export const usageProfiles = {
   vibe: {
     name: 'Vibe Coder',
+    icon: 'Coffee',
     description: 'Chat-style coding: write functions, explain code, quick edits.',
     sessionsPerMonth: 120,
     inputTokensPerSession: 800,
@@ -144,12 +145,40 @@ export const usageProfiles = {
   },
   heavy: {
     name: 'Heavy Coder',
+    icon: 'Code2',
     description: 'Agentic workflows: repo-wide edits, long debugging, Composer/Auto runs.',
     sessionsPerMonth: 250,
     inputTokensPerSession: 15000,
     outputTokensPerSession: 5000,
     toolUsagePercent: 60,
-  }
+  },
+  researcher: {
+    name: 'Deep Researcher',
+    icon: 'Search',
+    description: 'Long document analysis, literature reviews, structured reports, multi-step synthesis.',
+    sessionsPerMonth: 80,
+    inputTokensPerSession: 12000,
+    outputTokensPerSession: 6000,
+    toolUsagePercent: 20,
+  },
+  marketer: {
+    name: 'Marketer / Writer',
+    icon: 'PenTool',
+    description: 'Copy, campaigns, brand analysis, social content, SEO writing.',
+    sessionsPerMonth: 150,
+    inputTokensPerSession: 600,
+    outputTokensPerSession: 1800,
+    toolUsagePercent: 5,
+  },
+  analyst: {
+    name: 'Data Analyst',
+    icon: 'BarChart2',
+    description: 'Financial modeling, SQL generation, data interpretation, structured JSON output.',
+    sessionsPerMonth: 200,
+    inputTokensPerSession: 5000,
+    outputTokensPerSession: 3000,
+    toolUsagePercent: 30,
+  },
 };
 
 /*
@@ -306,14 +335,97 @@ Use React, modern CSS, and make it look premium. Dark mode. Use Inter font.`,
     description: 'A heavy vibe-coding prompt requesting an entire page. Input is short but output is massive — 16× ratio. This is the kind of session that burns through subscription limits fast.'
   },
   {
-    id: 'repo-agent',
-    title: 'Repo-Wide Agent Refactor',
-    category: 'Agentic Coding',
+    id: 'financial-analysis',
+    title: 'Financial Analysis with Structured Output',
+    category: 'Research',
     difficulty: 'Heavy',
-    input: '(Agent reads 8 files of context: package.json, 3 component files, 2 utility modules, a config file, and a test file — then receives instruction: "Refactor all API calls to use a centralized fetch wrapper with retry logic and error handling. Update all imports. Add the wrapper to utils/api.js.")',
-    inputTokens: 12000,
-    output: '(Agent produces: new utils/api.js file, modifies 5 existing files with updated imports and refactored fetch calls, updates 1 test file — approximately 4,500 tokens of coordinated output)',
-    outputTokens: 4500,
-    description: 'A heavy agentic session where the AI reads your entire repo context (~12K input tokens) and produces coordinated edits across multiple files. This is where Cursor Ultra or Claude Max pays for itself.'
+    input: `You are a financial analyst AI. I'm providing you with 5 years of annual report data for a mid-cap SaaS company (AppFlow Inc). Analyze the following metrics and return a structured JSON report:
+
+Revenue: 2020: $12M, 2021: $18M, 2022: $27M, 2023: $38M, 2024: $52M
+Gross Margin: 68%, 70%, 72%, 74%, 75%
+ARR Growth YoY: -, 50%, 50%, 40.7%, 36.8%
+Churn Rate: 8%, 7%, 6%, 5.5%, 5%
+Cash Burn/mo: $800K, $1.1M, $900K, $600K, -$200K (profitable)
+Headcount: 45, 72, 110, 145, 180
+
+Please produce:
+1. A structured JSON object with all metrics normalized
+2. A trend analysis narrative (growth acceleration/deceleration)
+3. Rule of 40 scores for each year
+4. A 3-year forward projection (conservative, base, aggressive scenarios)
+5. Comparable SaaS valuation at 8x, 12x, and 16x ARR multiples
+6. Key investment risks and strengths`,
+    inputTokens: 380,
+    output: `{
+  "company": "AppFlow Inc",
+  "analysis_date": "2025-04",
+  "metrics": {
+    "2020": { "revenue": 12000000, "gross_margin": 0.68, "arr_growth": null, "churn": 0.08, "rule_of_40": null },
+    "2021": { "revenue": 18000000, "gross_margin": 0.70, "arr_growth": 0.50, "churn": 0.07, "rule_of_40": 43 },
+    "2022": { "revenue": 27000000, "gross_margin": 0.72, "arr_growth": 0.50, "churn": 0.06, "rule_of_40": 47 },
+    "2023": { "revenue": 38000000, "gross_margin": 0.74, "arr_growth": 0.407, "churn": 0.055, "rule_of_40": 41 },
+    "2024": { "revenue": 52000000, "gross_margin": 0.75, "arr_growth": 0.368, "churn": 0.05, "rule_of_40": 39 }
+  },
+  "trend_analysis": "AppFlow demonstrates a classic SaaS growth deceleration curve — from hyper-growth (50% YoY) toward sustainable scale (~37%). Rule of 40 scores above 39 throughout indicate strong unit economics. The shift to profitability in 2024 (-$200K burn/mo) is a significant inflection point signaling operational efficiency...",
+  "projections": {
+    "conservative": { "2025": 67600000, "2026": 81120000, "2027": 93288000 },
+    "base":         { "2025": 72800000, "2026": 90272000, "2027": 108326400 },
+    "aggressive":   { "2025": 78000000, "2026": 101400000, "2027": 131820000 }
+  },
+  "valuations": {
+    "at_8x_arr":  { "2024_value": 416000000, "note": "Discount for decelerating growth" },
+    "at_12x_arr": { "2024_value": 624000000, "note": "Base case for Rule-of-40 company" },
+    "at_16x_arr": { "2024_value": 832000000, "note": "Premium for accelerating margins" }
+  },
+  "risks": ["Growth deceleration from 50% → 37%", "Competitive pressure in SMB SaaS", "Churn stabilizing at 5% — needs to reach <3% for Series C premium"],
+  "strengths": ["Six consecutive years of Rule-of-40 compliance", "Profitability achieved at sub-200 headcount", "75% gross margins vs 65% SaaS median"]
+}`,
+    outputTokens: 820,
+    description: 'A deep research prompt feeding 5 years of financial data and requesting multi-format structured output: JSON, narrative analysis, forward projections, and valuation ranges. Typical of how analysts use frontier models for quarterly research.'
+  },
+  {
+    id: 'market-research',
+    title: 'Competitive Market Research Report',
+    category: 'Research',
+    difficulty: 'Heavy',
+    input: `Act as a senior market research analyst. I need a comprehensive competitive analysis of the AI coding assistant market for a board presentation. Structure your output as a professional report covering:
+
+1. Market Overview: TAM, SAM, SOM estimates for AI coding tools (2024-2028)
+2. Competitive Landscape: Map the top 8 players (GitHub Copilot, Cursor, Codeium, Tabnine, Amazon CodeWhisperer, Replit AI, JetBrains AI, Sourcegraph Cody) across axes: pricing, model quality, IDE integration, enterprise features
+3. Pricing Architecture Analysis: Compare freemium vs. subscription vs. API-credit models
+4. User Segment Analysis: Identify top 4 buyer personas and their decision criteria
+5. Key Trends: What is driving adoption in 2025? (Agentic workflows, context windows, etc.)
+6. Strategic Recommendations: For a new entrant targeting enterprise developers
+
+Format as executive summary + detailed sections with bullet points. Be specific with numbers where available.`,
+    inputTokens: 210,
+    output: `# AI Coding Assistant Market: Competitive Intelligence Report
+**Prepared for Board Review | April 2025**
+
+## Executive Summary
+The AI coding assistant market is projected to grow from $4.8B (2024) to $23.6B by 2028, representing a 48.8% CAGR. GitHub Copilot maintains ~40% market share by revenue, but Cursor's usage-based model is rapidly capturing the "power developer" segment. The shift to agentic, multi-file editing is the defining competitive battleground of 2025.
+
+## 1. Market Sizing
+- **TAM** (all developer tools): $32B by 2028
+- **SAM** (AI-augmented dev tools): $23.6B by 2028  
+- **SOM** (realistic capture for new entrant): $450-800M by 2028 targeting enterprise
+
+## 2. Competitive Landscape
+| Player | Pricing | Model | IDE Coverage | Enterprise |
+|--------|---------|-------|--------------|------------|
+| GitHub Copilot | $19/mo | GPT-4o + custom | All major | ✅ Strong |
+| Cursor | $20-200/mo | Claude/GPT multi | VS Code only | 🔶 Growing |
+| Codeium | Free/$12 | Proprietary | 40+ IDEs | 🔶 Mid |
+| Amazon Q | $19/mo | Custom | AWS-focused | ✅ Strong |
+
+## 3. Pricing Architecture Trends
+The market is bifurcating: **consumer subscriptions** (flat-rate, broad access) vs. **API-credit models** (Cursor's explicit $X/mo pool). The credit model wins with power users who want cost transparency...
+
+## 4. Strategic Recommendations
+1. Target the "agentic workflow" segment — 73% of enterprise devs report this as top unmet need
+2. Offer explicit credit transparency (Cursor model) over opaque "unlimited"
+3. Lead with security/compliance for regulated industries (finance, healthcare)`,
+    outputTokens: 750,
+    description: 'A multi-section research prompt requesting structured market analysis with quantitative estimates, competitive tables, and strategic recommendations. This is how marketing teams and consultants use frontier LLMs for board-level deliverables.'
   }
 ];

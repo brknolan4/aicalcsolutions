@@ -745,6 +745,17 @@
   letter-spacing: 0.1em;
 }
 
+.toggle-group.profile-grid {
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.toggle-group.profile-grid .toggle-btn {
+  flex: 1 1 calc(50% - 0.4rem);
+  font-size: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  justify-content: center;
+}
+
 /* ============================
    FOOTER
    ============================ */
