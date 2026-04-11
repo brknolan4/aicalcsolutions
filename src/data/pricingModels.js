@@ -179,6 +179,15 @@ export const usageProfiles = {
     outputTokensPerSession: 3000,
     toolUsagePercent: 30,
   },
+  superheavy: {
+    name: 'Super Heavy User',
+    icon: 'Zap',
+    description: 'Full-time AI-native developer: multi-agent pipelines, 200K+ context windows, 8+ hours/day of active prompting across multiple models.',
+    sessionsPerMonth: 800,
+    inputTokensPerSession: 50000,
+    outputTokensPerSession: 20000,
+    toolUsagePercent: 90,
+  },
 };
 
 /*

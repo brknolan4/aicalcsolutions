@@ -213,6 +213,9 @@ function App() {
                 <button className={`toggle-btn ${profile==='analyst'?'active':''}`} onClick={()=>setProfile('analyst')}>
                   <BarChart2 size={14}/> Analyst
                 </button>
+                <button className={`toggle-btn ${profile==='superheavy'?'active':''}`} onClick={()=>setProfile('superheavy')}>
+                  <Zap size={14}/> Super Heavy
+                </button>
               </div>
               {usageProfiles[profile] && (
                 <p style={{fontSize:'0.72rem', color:'var(--text-secondary)', marginTop:'0.4rem', lineHeight:1.4}}>
@@ -223,14 +226,17 @@ function App() {
 
             <div className="input-group">
               <Tip icon={Zap} label="Base Model" 
-                tooltip="The AI model whose API token pricing is used for direct-cost calculations." />
+                tooltip="Select the AI model you use most. The two numbers shown are the API prices per 1 million tokens — Input price (what you send) / Output price (what the model replies with). Output is always more expensive. Example: $2.50 / $15.00 means $2.50 per 1M input tokens and $15.00 per 1M output tokens." />
               <select value={selectedModel} onChange={e=>setSelectedModel(e.target.value)}>
                 {apiModels.map(m=>(
                   <option key={m.id} value={m.id}>
-                    {m.provider}: {m.name} (${m.inputPrice} / ${m.outputPrice})
+                    {m.provider}: {m.name} (In ${m.inputPrice} / Out ${m.outputPrice} per 1M)
                   </option>
                 ))}
               </select>
+              <p style={{fontSize:'0.7rem', color:'var(--text-secondary)', marginTop:'0.3rem'}}>
+                Prices per 1 million tokens · In = prompt · Out = response
+              </p>
             </div>
 
             <div className="input-group">
