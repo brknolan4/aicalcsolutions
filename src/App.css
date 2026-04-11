@@ -757,6 +757,176 @@
 }
 
 /* ============================
+   DAILY / WEEKLY BREAKDOWN ROW
+   ============================ */
+.cost-breakdown-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 1rem 0 0.5rem;
+}
+.breakdown-cell {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: center;
+}
+.breakdown-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+.breakdown-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.breakdown-sub {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* ============================
+   MODEL COMPARISON
+   ============================ */
+.compare-section > h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+.compare-section > p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+.compare-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.model-pill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.model-pill:hover {
+  border-color: rgba(59,130,246,0.4);
+  color: var(--text-primary);
+}
+.model-pill.selected {
+  background: rgba(59,130,246,0.15);
+  border-color: rgba(59,130,246,0.5);
+  color: #93c5fd;
+  font-weight: 600;
+}
+.compare-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+.compare-grid {
+  display: grid;
+  min-width: 520px;
+}
+.compare-cell {
+  padding: 0.65rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-right: 1px solid rgba(255,255,255,0.04);
+  vertical-align: top;
+}
+.compare-cell:last-child {
+  border-right: none;
+}
+.compare-cell.header-label { background: transparent; }
+.compare-cell.compare-header {
+  background: rgba(255,255,255,0.04);
+  padding: 0.85rem;
+  text-align: center;
+}
+.compare-cell.row-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(0,0,0,0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+}
+.cmp-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.2rem;
+}
+.cmp-provider {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.cmp-context {
+  font-weight: 700;
+  color: #a78bfa;
+}
+.cmp-bestfor {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.rating-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+.rating-badge.rating-excellent { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+.rating-badge.rating-good      { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+.rating-badge.rating-ok        { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.specialty-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.specialty-pill {
+  font-size: 0.67rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(124,58,237,0.12);
+  border: 1px solid rgba(124,58,237,0.25);
+  color: #c4b5fd;
+}
+.price-cell { font-weight: 700; color: var(--text-primary); }
+.price-cell.in  { color: #60a5fa; }
+.price-cell.out { color: #f87171; }
+.price-cell.primary { color: #4ade80; font-size: 1rem; }
+.pro-con-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.pro-item, .con-item {
+  font-size: 0.77rem;
+  line-height: 1.35;
+  padding-left: 1rem;
+  position: relative;
+}
+.pro-item::before { content: '✓'; position: absolute; left: 0; color: #4ade80; font-weight: 700; }
+.con-item::before { content: '✗'; position: absolute; left: 0; color: #f87171; font-weight: 700; }
+
+/* ============================
    FOOTER
    ============================ */
 .app-footer {

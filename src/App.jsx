@@ -50,6 +50,16 @@ function App() {
   /* Example prompts expand/collapse */
   const [expandedExample, setExpandedExample] = useState(null);
 
+  /* Model Comparison */
+  const [compareIds, setCompareIds] = useState(['gpt-5-4']);
+  const toggleCompare = (id) => {
+    setCompareIds(prev =>
+      prev.includes(id)
+        ? prev.length > 1 ? prev.filter(x => x !== id) : prev
+        : prev.length < 3 ? [...prev, id] : prev
+    );
+  };
+
   /* Modal & Cookie State */
   const [activeModal, setActiveModal] = useState(null);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
@@ -80,6 +90,8 @@ function App() {
   const costOut    = (monthlyOut / 1e6) * model.outputPrice;
   const totalApi   = costIn + costOut;
   const annualApi  = totalApi * 12;
+  const dailyApi   = totalApi / 30;
+  const weeklyApi  = totalApi / 4.33;
   const tokenRatio = inputTokens > 0 ? (outputTokens / inputTokens).toFixed(1) : '—';
 
   /* Cheapest sub that beats API */
@@ -303,6 +315,25 @@ function App() {
               </div>
             </div>
 
+            {/* ── DAILY / WEEKLY BREAKDOWN ── */}
+            <div className="cost-breakdown-row">
+              <div className="breakdown-cell">
+                <span className="breakdown-label">Cost Per Day</span>
+                <span className="breakdown-value">{fmtUsd(dailyApi)}</span>
+                <span className="breakdown-sub">÷ 30 days</span>
+              </div>
+              <div className="breakdown-cell">
+                <span className="breakdown-label">Cost Per Week</span>
+                <span className="breakdown-value">{fmtUsd(weeklyApi)}</span>
+                <span className="breakdown-sub">÷ 4.33 weeks</span>
+              </div>
+              <div className="breakdown-cell">
+                <span className="breakdown-label">Cost Per Year</span>
+                <span className="breakdown-value">{fmtUsd(annualApi)}</span>
+                <span className="breakdown-sub">× 12 months</span>
+              </div>
+            </div>
+
             {/* ── TOKEN SIMULATOR (moved up!) ── */}
             <div className="simulator-section">
               <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
@@ -335,6 +366,121 @@ function App() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* ── MODEL COMPARISON ── */}
+            <div className="compare-section">
+              <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
+              <h3>⚡ Model Comparison</h3>
+              <p>Select up to 3 models to compare side-by-side. Costs use your current profile settings.</p>
+
+              <div className="compare-picker">
+                {apiModels.map(m => (
+                  <button
+                    key={m.id}
+                    className={`model-pill ${compareIds.includes(m.id) ? 'selected' : ''}`}
+                    onClick={() => toggleCompare(m.id)}
+                    title={compareIds.includes(m.id) && compareIds.length === 1 ? 'At least 1 model required' : ''}
+                  >
+                    {m.provider}: {m.name}
+                  </button>
+                ))}
+              </div>
+
+              {compareIds.length >= 1 && (() => {
+                const cols = compareIds.map(id => apiModels.find(m => m.id === id)).filter(Boolean);
+                const colColors = ['#3b82f6','#8b5cf6','#f59e0b'];
+                const modelCost = (m) => {
+                  const inCost  = (sessions * inputTokens  / 1e6) * m.inputPrice;
+                  const outCost = (sessions * outputTokens / 1e6) * m.outputPrice;
+                  return inCost + outCost;
+                };
+                const speedColor = s => s==='Fast'?'#22c55e':s==='Medium'?'#f59e0b':'#ef4444';
+                const ratingStars = r => r==='Excellent'?'⭐⭐⭐':r==='Good'?'⭐⭐':'⭐';
+
+                return (
+                  <div className="compare-table-wrap">
+                    <div className="compare-grid" style={{gridTemplateColumns:`160px repeat(${cols.length}, 1fr)`}}>
+
+                      {/* Header row */}
+                      <div className="compare-cell header-label"></div>
+                      {cols.map((m,i) => (
+                        <div key={m.id} className="compare-cell compare-header" style={{borderTop:`3px solid ${colColors[i]}`}}>
+                          <div className="cmp-name">{m.name}</div>
+                          <div className="cmp-provider">{m.provider}</div>
+                        </div>
+                      ))}
+
+                      {/* Rating */}
+                      <div className="compare-cell row-label">Overall Rating</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell">{ratingStars(m.rating)} <span className={`rating-badge rating-${m.rating?.toLowerCase()}`}>{m.rating}</span></div>)}
+
+                      {/* Speed */}
+                      <div className="compare-cell row-label">Response Speed</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell"><span style={{color:speedColor(m.speed),fontWeight:600}}>● {m.speed}</span></div>)}
+
+                      {/* Context */}
+                      <div className="compare-cell row-label">Context Window</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell cmp-context">{m.contextWindow}</div>)}
+
+                      {/* Specialties */}
+                      <div className="compare-cell row-label">Specialties</div>
+                      {cols.map(m => (
+                        <div key={m.id} className="compare-cell">
+                          <div className="specialty-pills">
+                            {m.specialties?.map(s => <span key={s} className="specialty-pill">{s}</span>)}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Input price */}
+                      <div className="compare-cell row-label">Input Price /1M</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell price-cell in">${m.inputPrice.toFixed(2)}</div>)}
+
+                      {/* Output price */}
+                      <div className="compare-cell row-label">Output Price /1M</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell price-cell out">${m.outputPrice.toFixed(2)}</div>)}
+
+                      {/* Daily cost */}
+                      <div className="compare-cell row-label">Daily API Cost</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell price-cell">{fmtUsd(modelCost(m)/30)}</div>)}
+
+                      {/* Monthly cost */}
+                      <div className="compare-cell row-label">Monthly API Cost</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell price-cell primary">{fmtUsd(modelCost(m))}</div>)}
+
+                      {/* Annual cost */}
+                      <div className="compare-cell row-label">Annual API Cost</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell price-cell">{fmtUsd(modelCost(m)*12)}</div>)}
+
+                      {/* Best for */}
+                      <div className="compare-cell row-label">Best For</div>
+                      {cols.map(m => <div key={m.id} className="compare-cell cmp-bestfor">{m.bestFor}</div>)}
+
+                      {/* Pros */}
+                      <div className="compare-cell row-label">Pros ✓</div>
+                      {cols.map(m => (
+                        <div key={m.id} className="compare-cell">
+                          <ul className="pro-con-list">
+                            {m.pros?.map((p,i) => <li key={i} className="pro-item">{p}</li>)}
+                          </ul>
+                        </div>
+                      ))}
+
+                      {/* Cons */}
+                      <div className="compare-cell row-label">Cons ✗</div>
+                      {cols.map(m => (
+                        <div key={m.id} className="compare-cell">
+                          <ul className="pro-con-list">
+                            {m.cons?.map((c,i) => <li key={i} className="con-item">{c}</li>)}
+                          </ul>
+                        </div>
+                      ))}
+
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* ── EXAMPLE PROMPTS ── */}
