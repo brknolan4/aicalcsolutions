@@ -1,0 +1,433 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Calculator, Zap, Coffee, Code2, User, TrendingDown,
+  Settings, DollarSign, Activity, AlertTriangle, CheckCircle2,
+  Info, RotateCcw, Trophy, BarChart3, Shield, ArrowDown,
+  FileCode, ChevronDown, ChevronUp
+} from 'lucide-react';
+import { apiModels, subscriptions, usageProfiles, providers, examplePrompts } from './data/pricingModels';
+import './App.css';
+
+/* ── Tooltip helper ── */
+const Tip = ({ icon: Icon, label, tooltip }) => (
+  <label>
+    {Icon && <Icon size={14} />}
+    {label}
+    <span className="info-icon">
+      <Info size={13} />
+      <span className="tooltip-container">{tooltip}</span>
+    </span>
+  </label>
+);
+
+/* ── Formatting helpers ── */
+const fmt = n => n.toLocaleString();
+const fmtUsd = n => `$${n.toFixed(2)}`;
+
+/* ── Ad Slot component ── */
+const AdSlot = ({ id }) => (
+  <div className="ad-slot" id={`ad-slot-${id}`}>
+    {/* Replace with: <ins class="adsbygoogle" data-ad-client="ca-pub-XXXXXXX" data-ad-slot="XXXXXXX" ... /> */}
+    Ad Space
+  </div>
+);
+
+function App() {
+  const calcRef = useRef(null);
+
+  /* ── State ── */
+  const [profile, setProfile]           = useState('vibe');
+  const [selectedModel, setSelectedModel] = useState('gpt-5-4');
+  const [sessions, setSessions]         = useState(usageProfiles.vibe.sessionsPerMonth);
+  const [inputTokens, setInputTokens]   = useState(usageProfiles.vibe.inputTokensPerSession);
+  const [outputTokens, setOutputTokens] = useState(usageProfiles.vibe.outputTokensPerSession);
+  const [providerFilter, setProviderFilter] = useState('All');
+
+  /* Simulator */
+  const [simInput, setSimInput]   = useState('');
+  const [simOutput, setSimOutput] = useState('');
+
+  /* Example prompts expand/collapse */
+  const [expandedExample, setExpandedExample] = useState(null);
+
+  useEffect(() => {
+    const p = usageProfiles[profile];
+    setSessions(p.sessionsPerMonth);
+    setInputTokens(p.inputTokensPerSession);
+    setOutputTokens(p.outputTokensPerSession);
+  }, [profile]);
+
+  /* ── Derived calcs ── */
+  const model      = apiModels.find(m => m.id === selectedModel) || apiModels[0];
+  const monthlyIn  = sessions * inputTokens;
+  const monthlyOut = sessions * outputTokens;
+  const costIn     = (monthlyIn  / 1e6) * model.inputPrice;
+  const costOut    = (monthlyOut / 1e6) * model.outputPrice;
+  const totalApi   = costIn + costOut;
+  const annualApi  = totalApi * 12;
+  const tokenRatio = inputTokens > 0 ? (outputTokens / inputTokens).toFixed(1) : '—';
+
+  /* Cheapest sub that beats API */
+  const cheapestSub = [...subscriptions]
+    .filter(s => totalApi >= s.price)
+    .sort((a, b) => a.price - b.price)[0];
+
+  /* Best value = highest mid-est / price */
+  const bestValue = [...subscriptions]
+    .map(s => ({ ...s, ratio: ((s.apiValueEstimate[0] + s.apiValueEstimate[1]) / 2) / s.price }))
+    .sort((a, b) => b.ratio - a.ratio)[0];
+
+  /* Filtered & sorted subs */
+  const filteredSubs = [...subscriptions]
+    .filter(s => providerFilter === 'All' || s.provider === providerFilter)
+    .sort((a, b) => a.price - b.price);
+
+  /* Simulator calcs */
+  const simInChars   = simInput.length;
+  const simInWords   = simInput.trim() ? simInput.trim().split(/\s+/).length : 0;
+  const simInTokens  = Math.ceil(simInChars / 4);
+  const simInCost    = (simInTokens / 1e6) * model.inputPrice;
+
+  const simOutChars  = simOutput.length;
+  const simOutWords  = simOutput.trim() ? simOutput.trim().split(/\s+/).length : 0;
+  const simOutTokens = Math.ceil(simOutChars / 4);
+  const simOutCost   = (simOutTokens / 1e6) * model.outputPrice;
+
+  /* Example prompt cost helper */
+  const exCost = (inTok, outTok) => {
+    return (inTok / 1e6) * model.inputPrice + (outTok / 1e6) * model.outputPrice;
+  };
+
+  const scrollToCalc = () => calcRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+  return (
+    <div className="app-wrapper">
+
+      {/* ━━━━━━━━━━ LANDING HERO ━━━━━━━━━━ */}
+      <section className="landing-hero">
+        <span className="hero-eyebrow"><Zap size={14} /> Free · No Sign-Up · Instant Results</span>
+        <h1 className="hero-headline">
+          What Should You <em>Actually Pay</em><br/>for AI Each Month?
+        </h1>
+        <p className="hero-sub">
+          AI pricing is broken into API billing, consumer subscriptions, and tool-specific usage pools. 
+          Even when the monthly price looks simple, the actual value is fuzzy. We cut through the noise 
+          and show you <strong>exactly</strong> what each dollar buys — in tokens, sessions, and real workflows.
+        </p>
+        <div className="hero-stats">
+          <div className="hero-stat">
+            <div className="hero-stat-value">6</div>
+            <div className="hero-stat-label">API Models Compared</div>
+          </div>
+          <div className="hero-stat">
+            <div className="hero-stat-value">9</div>
+            <div className="hero-stat-label">Subscription Plans</div>
+          </div>
+          <div className="hero-stat">
+            <div className="hero-stat-value">3</div>
+            <div className="hero-stat-label">Confidence Tiers</div>
+          </div>
+        </div>
+        <div className="hero-cta">
+          <button className="cta-btn" onClick={scrollToCalc}>
+            <ArrowDown size={18} style={{marginRight: 6, verticalAlign: 'middle'}} />
+            Calculate My True Cost
+          </button>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━ FEATURES ROW ━━━━━━━━━━ */}
+      <div className="features-row">
+        <div className="feature-card">
+          <div className="feature-icon blue"><DollarSign size={24} /></div>
+          <h3>Exact API Math</h3>
+          <p>Real token pricing from OpenAI, Anthropic & Google — no guesswork.</p>
+        </div>
+        <div className="feature-card">
+          <div className="feature-icon green"><Shield size={24} /></div>
+          <h3>Confidence Ratings</h3>
+          <p>Every subscription estimate is tagged Exact, High, or Low confidence.</p>
+        </div>
+        <div className="feature-card">
+          <div className="feature-icon amber"><BarChart3 size={24} /></div>
+          <h3>Break-Even Analysis</h3>
+          <p>See exactly when a subscription saves money vs. direct API calls.</p>
+        </div>
+        <div className="feature-card">
+          <div className="feature-icon purple"><Code2 size={24} /></div>
+          <h3>Developer Profiles</h3>
+          <p>Instant presets for vibe coders and heavy agentic workflows.</p>
+        </div>
+      </div>
+
+      <div className="section-divider"></div>
+
+      {/* ━━━━━━━━━━ AD SLOT 1 ━━━━━━━━━━ */}
+      <AdSlot id="top" />
+
+      {/* ━━━━━━━━━━ CALCULATOR ━━━━━━━━━━ */}
+      <section className="calculator-section" ref={calcRef}>
+        <div className="calc-section-header">
+          <h2>AI Cost Calculator</h2>
+          <p>Configure your usage on the left. Results update instantly.</p>
+        </div>
+
+        <div className="calc-layout">
+          {/* ── SIDEBAR ── */}
+          <aside className="sidebar glass-panel">
+            <div className="sidebar-title">
+              <Calculator size={20} color="#3b82f6" /> Settings
+            </div>
+
+            <div className="input-group">
+              <Tip icon={User} label="Developer Profile" 
+                tooltip="Presets that auto-fill usage numbers. Vibe = light chat coding. Heavy = agentic repo-wide work." />
+              <div className="toggle-group">
+                <button className={`toggle-btn ${profile==='vibe'?'active':''}`} onClick={()=>setProfile('vibe')}>
+                  <Coffee size={16}/> Vibe
+                </button>
+                <button className={`toggle-btn ${profile==='heavy'?'active':''}`} onClick={()=>setProfile('heavy')}>
+                  <Code2 size={16}/> Heavy
+                </button>
+              </div>
+            </div>
+
+            <div className="input-group">
+              <Tip icon={Zap} label="Base Model" 
+                tooltip="The AI model whose API token pricing is used for direct-cost calculations." />
+              <select value={selectedModel} onChange={e=>setSelectedModel(e.target.value)}>
+                {apiModels.map(m=>(
+                  <option key={m.id} value={m.id}>
+                    {m.provider}: {m.name} (${m.inputPrice} / ${m.outputPrice})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="input-group">
+              <Tip icon={Activity} label="Monthly Sessions" 
+                tooltip="Number of individual chat threads, coding tasks, or agent runs you do each month." />
+              <input type="number" value={sessions} onChange={e=>setSessions(Number(e.target.value))} min="0" />
+            </div>
+
+            <div className="input-group">
+              <Tip icon={Settings} label="Avg Input Tokens / Session" 
+                tooltip="Size of each prompt. A short question ≈ 50 tokens. A code file ≈ 3,000–10,000 tokens." />
+              <input type="number" value={inputTokens} onChange={e=>setInputTokens(Number(e.target.value))} step="500" min="0" />
+            </div>
+
+            <div className="input-group">
+              <Tip icon={Settings} label="Avg Output Tokens / Session" 
+                tooltip="Size of AI's response. A function ≈ 200 tokens. Full file rewrite ≈ 2,000–5,000 tokens." />
+              <input type="number" value={outputTokens} onChange={e=>setOutputTokens(Number(e.target.value))} step="100" min="0" />
+            </div>
+
+            {/* Monthly usage summary */}
+            <div className="monthly-summary">
+              <div className="monthly-summary-row"><span>Total Input / mo</span><span>{fmt(monthlyIn)} tokens</span></div>
+              <div className="monthly-summary-row"><span>Total Output / mo</span><span>{fmt(monthlyOut)} tokens</span></div>
+              <div className="monthly-summary-row"><span>Output:Input ratio</span><span>{tokenRatio}×</span></div>
+              <div className="monthly-summary-row"><span>Input cost</span><span>{fmtUsd(costIn)}</span></div>
+              <div className="monthly-summary-row"><span>Output cost</span><span>{fmtUsd(costOut)}</span></div>
+            </div>
+
+            <button className="reset-btn" onClick={()=>{
+              const p = usageProfiles[profile];
+              setSessions(p.sessionsPerMonth);
+              setInputTokens(p.inputTokensPerSession);
+              setOutputTokens(p.outputTokensPerSession);
+            }}>
+              <RotateCcw size={14} style={{marginRight: 4, verticalAlign: 'middle'}} /> Reset to Defaults
+            </button>
+          </aside>
+
+          {/* ── DASHBOARD ── */}
+          <div className="dashboard">
+
+            {/* Summary Cards */}
+            <div className="summary-grid">
+              <div className="summary-card glass-panel primary">
+                <span className="card-label"><DollarSign size={14}/> Direct API / Month</span>
+                <div className="card-value">{fmtUsd(totalApi)}</div>
+                <div className="card-sub">{model.name} · In {fmtUsd(costIn)} + Out {fmtUsd(costOut)}</div>
+              </div>
+              <div className="summary-card glass-panel amber">
+                <span className="card-label"><BarChart3 size={14}/> Annualized API Cost</span>
+                <div className="card-value">{fmtUsd(annualApi)}</div>
+                <div className="card-sub">12 months at current usage</div>
+              </div>
+              <div className="summary-card glass-panel green">
+                <span className="card-label"><TrendingDown size={14}/> Cheapest Sub Alternative</span>
+                <div className="card-value">{cheapestSub ? cheapestSub.name : '—'}</div>
+                <div className="card-sub">{cheapestSub ? `${fmtUsd(cheapestSub.price)}/mo · saves ${fmtUsd(totalApi - cheapestSub.price)}/mo` : 'API is cheaper than all subscriptions'}</div>
+              </div>
+              <div className="summary-card glass-panel purple">
+                <span className="card-label"><Trophy size={14}/> Best Value Plan</span>
+                <div className="card-value">{bestValue ? bestValue.name : '—'}</div>
+                <div className="card-sub">{bestValue ? `${fmtUsd(bestValue.price)}/mo · ${bestValue.ratio.toFixed(1)}× value ratio` : 'N/A'}</div>
+              </div>
+            </div>
+
+            {/* ── TOKEN SIMULATOR (moved up!) ── */}
+            <div className="simulator-section">
+              <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
+              <h3>🧪 Token Simulator</h3>
+              <p>Paste a real prompt or expected response to estimate tokens and cost with {model.name}.</p>
+
+              <div className="sim-grid">
+                <div className="sim-card glass-panel input-side">
+                  <div className="sim-card-title">Your Prompt (Input)</div>
+                  <textarea className="token-textarea" placeholder="Paste your prompt, code, or context here…"
+                    value={simInput} onChange={e=>setSimInput(e.target.value)} />
+                  <div className="sim-stats">
+                    <div className="sim-meta">
+                      <strong>{fmt(simInTokens)}</strong> tokens<br/>
+                      <span className="sim-cost">{fmt(simInChars)} chars · {fmt(simInWords)} words · ≈ {fmtUsd(simInCost)} per call</span>
+                    </div>
+                    <button className="btn-sync blue" onClick={()=>setInputTokens(simInTokens)}>Sync to Input</button>
+                  </div>
+                </div>
+                <div className="sim-card glass-panel output-side">
+                  <div className="sim-card-title">AI Response (Output)</div>
+                  <textarea className="token-textarea" placeholder="Paste an expected AI response here…"
+                    value={simOutput} onChange={e=>setSimOutput(e.target.value)} />
+                  <div className="sim-stats">
+                    <div className="sim-meta">
+                      <strong>{fmt(simOutTokens)}</strong> tokens<br/>
+                      <span className="sim-cost">{fmt(simOutChars)} chars · {fmt(simOutWords)} words · ≈ {fmtUsd(simOutCost)} per call</span>
+                    </div>
+                    <button className="btn-sync green" onClick={()=>setOutputTokens(simOutTokens)}>Sync to Output</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── EXAMPLE PROMPTS ── */}
+            <div className="examples-section">
+              <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
+              <h3>📋 Real-World Examples</h3>
+              <p>See what actual vibe-coding sessions look like — with token counts and costs using {model.name}.</p>
+
+              <div className="example-list">
+                {examplePrompts.map(ex => {
+                  const isOpen = expandedExample === ex.id;
+                  const cost = exCost(ex.inputTokens, ex.outputTokens);
+                  const ratio = (ex.outputTokens / ex.inputTokens).toFixed(1);
+                  const diffClass = ex.difficulty === 'Light' ? 'diff-light' : ex.difficulty === 'Medium' ? 'diff-medium' : 'diff-heavy';
+                  
+                  return (
+                    <div key={ex.id} className="example-card" onClick={() => setExpandedExample(isOpen ? null : ex.id)}>
+                      <div className="example-header">
+                        <h4>
+                          <FileCode size={16} />
+                          {ex.title}
+                          <span className={`diff-badge ${diffClass}`}>{ex.difficulty}</span>
+                          <span className="diff-badge" style={{background:'rgba(124,58,237,0.15)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.3)'}}>{ex.category}</span>
+                        </h4>
+                        {isOpen ? <ChevronUp size={18} color="var(--text-secondary)" /> : <ChevronDown size={18} color="var(--text-secondary)" />}
+                      </div>
+                      <p className="example-desc">{ex.description}</p>
+                      <div className="example-metrics">
+                        <div className="example-metric">
+                          <span className="example-metric-label">Input</span>
+                          <span className="example-metric-value blue">{fmt(ex.inputTokens)} tokens</span>
+                        </div>
+                        <div className="example-metric">
+                          <span className="example-metric-label">Output</span>
+                          <span className="example-metric-value green">{fmt(ex.outputTokens)} tokens</span>
+                        </div>
+                        <div className="example-metric">
+                          <span className="example-metric-label">Ratio</span>
+                          <span className="example-metric-value">{ratio}×</span>
+                        </div>
+                        <div className="example-metric">
+                          <span className="example-metric-label">API Cost</span>
+                          <span className="example-metric-value purple">{fmtUsd(cost)}</span>
+                        </div>
+                      </div>
+
+                      {isOpen && (
+                        <div className="example-detail">
+                          <div style={{marginBottom:'0.75rem'}}>
+                            <div className="example-code-label">Input Prompt</div>
+                            <div className="example-code">{ex.input}</div>
+                          </div>
+                          <div>
+                            <div className="example-code-label">AI Output</div>
+                            <div className="example-code">{ex.output}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── AD SLOT 2 ── */}
+            <AdSlot id="mid" />
+
+            {/* ── SUBSCRIPTION BREAKDOWN ── */}
+            <div>
+              <h3 style={{color:'var(--text-secondary)', marginBottom:'0.75rem', fontSize:'1.1rem'}}>Subscription Breakdown</h3>
+              <div className="provider-filters">
+                {providers.map(p => (
+                  <button key={p} className={`filter-pill ${providerFilter===p?'active':''}`} onClick={()=>setProviderFilter(p)}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sub-list">
+              {filteredSubs.map(sub => {
+                const isWorthIt = totalApi > sub.price;
+                const badgeClass = sub.confidence==='exact' ? 'badge-exact' : sub.confidence==='high' ? 'badge-high' : 'badge-low';
+                const SubIcon = sub.confidence==='exact' ? CheckCircle2 : AlertTriangle;
+
+                return (
+                  <div key={sub.id} className="sub-item">
+                    <div className="sub-info">
+                      <h4>
+                        {sub.name}
+                        <span className={`badge ${badgeClass}`}><SubIcon size={10}/> {sub.confidence}</span>
+                      </h4>
+                      <p>{sub.description}</p>
+                      <div className="equivalence">
+                        API-equivalent value: <strong style={{color:'#fff'}}>{fmtUsd(sub.apiValueEstimate[0])} – {fmtUsd(sub.apiValueEstimate[1])}</strong> /mo
+                      </div>
+                      <div className={`break-even-text ${isWorthIt?'worth-it':''}`}>
+                        {isWorthIt
+                          ? `✅ Your ${fmtUsd(totalApi)}/mo API usage exceeds this plan — subscription saves ${fmtUsd(totalApi - sub.price)}/mo.`
+                          : `⚠️ At ${fmtUsd(totalApi)}/mo, direct API is ${fmtUsd(sub.price - totalApi)}/mo cheaper.`}
+                      </div>
+                    </div>
+                    <div className="sub-price">
+                      <div className="sub-price-val">{fmtUsd(sub.price)}</div>
+                      <div className="sub-price-annual">{fmtUsd(sub.price * 12)}/yr</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredSubs.length === 0 && (
+                <p style={{color:'var(--text-secondary)', textAlign:'center', padding:'2rem 0'}}>No subscriptions match this filter.</p>
+              )}
+            </div>
+
+            {/* ── AD SLOT 3 ── */}
+            <AdSlot id="bottom" />
+
+          </div>{/* end dashboard */}
+        </div>{/* end calc-layout */}
+      </section>
+
+      {/* ━━━━━━━━━━ FOOTER ━━━━━━━━━━ */}
+      <footer className="app-footer">
+        <p>AI Cost Calculator · Pricing data sourced from official provider pages · Updated April 2026</p>
+        <p style={{marginTop:'0.25rem', fontSize:'0.7rem'}}>Token estimates use a ~4 characters/token heuristic. Actual tokenization varies by model.</p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
