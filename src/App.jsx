@@ -3,7 +3,7 @@ import {
   Calculator, Zap, Coffee, Code2, User, TrendingDown,
   Settings, DollarSign, Activity, AlertTriangle, CheckCircle2,
   Info, RotateCcw, Trophy, BarChart3, Shield, ArrowDown,
-  FileCode, ChevronDown, ChevronUp
+  FileCode, ChevronDown, ChevronUp, X
 } from 'lucide-react';
 import { apiModels, subscriptions, usageProfiles, providers, examplePrompts } from './data/pricingModels';
 import './App.css';
@@ -49,6 +49,21 @@ function App() {
 
   /* Example prompts expand/collapse */
   const [expandedExample, setExpandedExample] = useState(null);
+
+  /* Modal & Cookie State */
+  const [activeModal, setActiveModal] = useState(null);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('cookieConsent')) {
+      setShowCookieBanner(true);
+    }
+  }, []);
+
+  const acceptCookies = () => {
+    localStorage.setItem('cookieConsent', 'true');
+    setShowCookieBanner(false);
+  };
 
   useEffect(() => {
     const p = usageProfiles[profile];
@@ -425,7 +440,52 @@ function App() {
       <footer className="app-footer">
         <p>AI Cost Calculator · Pricing data sourced from official provider pages · Updated April 2026</p>
         <p style={{marginTop:'0.25rem', fontSize:'0.7rem'}}>Token estimates use a ~4 characters/token heuristic. Actual tokenization varies by model.</p>
+        
+        <div className="footer-links">
+          <button className="footer-link" onClick={() => setActiveModal('privacy')}>Privacy Policy</button>
+          <button className="footer-link" onClick={() => setActiveModal('tos')}>Terms of Service</button>
+          <a href="mailto:contact@aicalcsolutions.com" className="footer-link">Contact</a>
+        </div>
       </footer>
+
+      {/* ━━━━━━━━━━ MODALS ━━━━━━━━━━ */}
+      {activeModal && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setActiveModal(null)}>
+              <X size={20} />
+            </button>
+            {activeModal === 'privacy' && (
+              <div>
+                <h2>Privacy Policy</h2>
+                <p>Welcome to AI Calc Solutions. We value your privacy and are committed to protecting your personal data. This policy explains how we collect and use data when you visit our website.</p>
+                <p><strong>Third-Party Advertising:</strong> Third party vendors, including Google, use cookies to serve ads based on your prior visits to this website or other websites. Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and/or other sites on the Internet.</p>
+                <p><strong>Opting Out:</strong> You may opt out of personalized advertising by visiting <a href="https://adssettings.google.com" target="_blank" rel="noreferrer" style={{color: 'var(--accent-primary)'}}>Google Ads Settings</a>. We do not store any sensitive personal data or your actual AI prompts entered into the token simulator.</p>
+                <p>For any questions regarding this policy, please contact us.</p>
+              </div>
+            )}
+            {activeModal === 'tos' && (
+              <div>
+                <h2>Terms of Service & Disclaimer</h2>
+                <p>By using the AI Cost Calculator, you agree to these terms.</p>
+                <p><strong>Estimates Only:</strong> The pricing, token counts, and cost estimates provided by this tool are approximations meant for planning purposes only. We use general heuristic formulas (such as 4 characters per token) which may not exactly match the actual tokenization logic used by individual AI providers like OpenAI, Anthropic, or Google.</p>
+                <p><strong>No Affiliation:</strong> AI Calc Solutions is an independent tool and is not affiliated with, endorsed by, or sponsored by OpenAI, Anthropic, Google, Cursor, or any other entity mentioned.</p>
+                <p><strong>Limitation of Liability:</strong> We are not responsible for any actual billing discrepancies or unexpected API costs incurred by your usage of third-party AI services. Please verify all pricing directly with the providers before making financial decisions.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ━━━━━━━━━━ COOKIE BANNER ━━━━━━━━━━ */}
+      {showCookieBanner && (
+        <div className="cookie-banner">
+          <div className="cookie-text">
+            We use cookies to improve your experience and serve personalized ads. By using this site, you consent to our use of cookies as described in our Privacy Policy.
+          </div>
+          <button className="cookie-btn" onClick={acceptCookies}>Accept</button>
+        </div>
+      )}
     </div>
   );
 }
