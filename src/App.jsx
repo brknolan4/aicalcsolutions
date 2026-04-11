@@ -444,7 +444,7 @@ function App() {
         <div className="footer-links">
           <button className="footer-link" onClick={() => setActiveModal('privacy')}>Privacy Policy</button>
           <button className="footer-link" onClick={() => setActiveModal('tos')}>Terms of Service</button>
-          <a href="mailto:contact@aicalcsolutions.com" className="footer-link">Contact</a>
+          <a href="mailto:brknolan4@gmail.com" className="footer-link">Contact</a>
         </div>
       </footer>
 
