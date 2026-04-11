@@ -405,7 +405,7 @@ function App() {
                     ))}
                   </div>
                   <div className="compare-table-wrap">
-                    <div className="compare-grid" style={{gridTemplateColumns:`160px repeat(${cols.length}, 1fr)`}}>
+                    <div className="compare-grid" style={{gridTemplateColumns:`120px repeat(${cols.length}, 1fr)`}}>
                       <div className="compare-cell header-label"></div>
                       {cols.map((m,i) => <div key={m.id} className="compare-cell compare-header" style={{borderTop:`3px solid ${colColors[i]}`}}><div className="cmp-name">{m.name}</div><div className="cmp-provider">{m.provider}</div></div>)}
                       <div className="compare-cell row-label">Overall Rating</div>
@@ -449,53 +449,39 @@ function App() {
                         <thead>
                           <tr>
                             <th>Plan</th>
-                            <th>Provider</th>
-                            <th>Monthly Cost</th>
-                            <th>Annual Cost</th>
+                            <th>Mo. Cost</th>
+                            <th>Ann. Cost</th>
                             {cols.map((m,i) => (
                               <th key={m.id} style={{borderTop:`3px solid ${colColors[i]}`}}>
-                                ~Tokens ({m.name})
-                              </th>
-                            ))}
-                            {cols.map((m,i) => (
-                              <th key={`vs-${m.id}`} style={{borderTop:`3px solid ${colColors[i]}`}}>
-                                vs {m.name} API
+                                {m.name} — Tokens &amp; Savings
                               </th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {[...subscriptions].sort((a,b)=>a.price-b.price).map(sub => {
+                          {[...subscriptions].sort((a,b)=>a.price-b.price).map((sub, ri) => {
                             const midVal = (sub.apiValueEstimate[0] + sub.apiValueEstimate[1]) / 2;
                             return (
-                              <tr key={sub.id}>
-                                <td style={{fontWeight:600,color:'var(--text-primary)'}}>{sub.name}</td>
-                                <td style={{color:'var(--text-secondary)',fontSize:'0.78rem'}}>{sub.provider}</td>
-                                <td style={{fontWeight:700,color:'#60a5fa'}}>{fmtUsd(sub.price)}/mo</td>
-                                <td style={{color:'var(--text-secondary)',fontSize:'0.78rem'}}>{fmtUsd(sub.price*12)}/yr</td>
+                              <tr key={sub.id} style={{background: ri%2===0 ? 'transparent' : 'rgba(255,255,255,0.015)'}}>
+                                <td>
+                                  <div style={{fontWeight:600,color:'var(--text-primary)',fontSize:'0.8rem'}}>{sub.name}</div>
+                                  <div style={{fontSize:'0.68rem',color:'var(--text-secondary)'}}>{sub.provider}</div>
+                                </td>
+                                <td style={{fontWeight:700,color:'#60a5fa',whiteSpace:'nowrap'}}>{fmtUsd(sub.price)}/mo</td>
+                                <td style={{color:'var(--text-secondary)',fontSize:'0.75rem',whiteSpace:'nowrap'}}>{fmtUsd(sub.price*12)}/yr</td>
                                 {cols.map(m => {
                                   const tokEst = Math.round(midVal / m.inputPrice * 1e6);
-                                  const tokStr = tokEst >= 1e6
-                                    ? `~${(tokEst/1e6).toFixed(1)}M`
-                                    : tokEst >= 1e3
-                                    ? `~${(tokEst/1e3).toFixed(0)}K`
-                                    : `~${tokEst}`;
-                                  return (
-                                    <td key={m.id}>
-                                      <div style={{fontWeight:600,color:'#a78bfa'}}>{tokStr} tokens</div>
-                                      <div style={{fontSize:'0.7rem',color:'var(--text-secondary)'}}>≈ {fmtUsd(sub.apiValueEstimate[0])}–{fmtUsd(sub.apiValueEstimate[1])} API value</div>
-                                    </td>
-                                  );
-                                })}
-                                {cols.map(m => {
+                                  const tokStr = tokEst >= 1e6 ? `~${(tokEst/1e6).toFixed(1)}M` : `~${(tokEst/1e3).toFixed(0)}K`;
                                   const apiCost = modelCost(m);
                                   const saves = apiCost - sub.price;
                                   const better = saves > 0;
                                   return (
-                                    <td key={`vs-${m.id}`}>
+                                    <td key={m.id}>
+                                      <div style={{fontWeight:600,color:'#a78bfa',fontSize:'0.8rem'}}>{tokStr} tokens</div>
+                                      <div style={{fontSize:'0.68rem',color:'var(--text-secondary)',marginBottom:'0.25rem'}}>≈ {fmtUsd(sub.apiValueEstimate[0])}–{fmtUsd(sub.apiValueEstimate[1])} value</div>
                                       {better
-                                        ? <span style={{color:'#4ade80',fontWeight:600,fontSize:'0.8rem'}}>✓ Saves {fmtUsd(saves)}/mo</span>
-                                        : <span style={{color:'#f87171',fontWeight:600,fontSize:'0.8rem'}}>✗ API cheaper by {fmtUsd(-saves)}/mo</span>
+                                        ? <span style={{color:'#4ade80',fontWeight:600,fontSize:'0.75rem'}}>✓ saves {fmtUsd(saves)}/mo vs API</span>
+                                        : <span style={{color:'#f87171',fontWeight:600,fontSize:'0.75rem'}}>✗ API {fmtUsd(-saves)}/mo cheaper</span>
                                       }
                                     </td>
                                   );
