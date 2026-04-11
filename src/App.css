@@ -927,6 +927,40 @@
 .con-item::before { content: '✗'; position: absolute; left: 0; color: #f87171; font-weight: 700; }
 
 /* ============================
+   SUBSCRIPTION COMPARE TABLE
+   ============================ */
+.sub-compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  min-width: 600px;
+}
+.sub-compare-table thead tr {
+  border-bottom: 1px solid var(--border-color);
+}
+.sub-compare-table th {
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: rgba(0,0,0,0.15);
+  white-space: nowrap;
+}
+.sub-compare-table td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+.sub-compare-table tbody tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+
+/* ============================
    FOOTER
    ============================ */
 .app-footer {

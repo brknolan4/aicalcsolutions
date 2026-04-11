@@ -434,7 +434,82 @@ function App() {
                       {cols.map(m => <div key={m.id} className="compare-cell"><ul className="pro-con-list">{m.cons?.map((c,i)=><li key={i} className="con-item">{c}</li>)}</ul></div>)}
                     </div>
                   </div>
+
+                  {/* ── SUBSCRIPTION vs API COMPARISON ── */}
+                  <div style={{marginTop:'2rem'}}>
+                    <h4 style={{fontSize:'1rem',color:'var(--text-primary)',marginBottom:'0.35rem'}}>
+                      💳 Subscription Plans vs Your API Cost
+                    </h4>
+                    <p style={{fontSize:'0.8rem',color:'var(--text-secondary)',marginBottom:'1rem'}}>
+                      Monthly subscription prices with approximate token capacity based on each selected model's pricing.
+                      Token estimates use the midpoint API-equivalent value ÷ model input price.
+                    </p>
+                    <div className="compare-table-wrap">
+                      <table className="sub-compare-table">
+                        <thead>
+                          <tr>
+                            <th>Plan</th>
+                            <th>Provider</th>
+                            <th>Monthly Cost</th>
+                            <th>Annual Cost</th>
+                            {cols.map((m,i) => (
+                              <th key={m.id} style={{borderTop:`3px solid ${colColors[i]}`}}>
+                                ~Tokens ({m.name})
+                              </th>
+                            ))}
+                            {cols.map((m,i) => (
+                              <th key={`vs-${m.id}`} style={{borderTop:`3px solid ${colColors[i]}`}}>
+                                vs {m.name} API
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...subscriptions].sort((a,b)=>a.price-b.price).map(sub => {
+                            const midVal = (sub.apiValueEstimate[0] + sub.apiValueEstimate[1]) / 2;
+                            return (
+                              <tr key={sub.id}>
+                                <td style={{fontWeight:600,color:'var(--text-primary)'}}>{sub.name}</td>
+                                <td style={{color:'var(--text-secondary)',fontSize:'0.78rem'}}>{sub.provider}</td>
+                                <td style={{fontWeight:700,color:'#60a5fa'}}>{fmtUsd(sub.price)}/mo</td>
+                                <td style={{color:'var(--text-secondary)',fontSize:'0.78rem'}}>{fmtUsd(sub.price*12)}/yr</td>
+                                {cols.map(m => {
+                                  const tokEst = Math.round(midVal / m.inputPrice * 1e6);
+                                  const tokStr = tokEst >= 1e6
+                                    ? `~${(tokEst/1e6).toFixed(1)}M`
+                                    : tokEst >= 1e3
+                                    ? `~${(tokEst/1e3).toFixed(0)}K`
+                                    : `~${tokEst}`;
+                                  return (
+                                    <td key={m.id}>
+                                      <div style={{fontWeight:600,color:'#a78bfa'}}>{tokStr} tokens</div>
+                                      <div style={{fontSize:'0.7rem',color:'var(--text-secondary)'}}>≈ {fmtUsd(sub.apiValueEstimate[0])}–{fmtUsd(sub.apiValueEstimate[1])} API value</div>
+                                    </td>
+                                  );
+                                })}
+                                {cols.map(m => {
+                                  const apiCost = modelCost(m);
+                                  const saves = apiCost - sub.price;
+                                  const better = saves > 0;
+                                  return (
+                                    <td key={`vs-${m.id}`}>
+                                      {better
+                                        ? <span style={{color:'#4ade80',fontWeight:600,fontSize:'0.8rem'}}>✓ Saves {fmtUsd(saves)}/mo</span>
+                                        : <span style={{color:'#f87171',fontWeight:600,fontSize:'0.8rem'}}>✗ API cheaper by {fmtUsd(-saves)}/mo</span>
+                                      }
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                   <AdSlot id="compare-bottom" />
+
                 </div>
               );
             })()}
