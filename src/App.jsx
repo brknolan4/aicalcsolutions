@@ -60,6 +60,9 @@ function App() {
     );
   };
 
+  /* Active dashboard tab */
+  const [activeTab, setActiveTab] = useState('summary');
+
   /* Modal & Cookie State */
   const [activeModal, setActiveModal] = useState(null);
   const [showCookieBanner, setShowCookieBanner] = useState(false);
@@ -201,7 +204,7 @@ function App() {
 
         <div className="calc-layout">
           {/* ── SIDEBAR ── */}
-          <aside className="sidebar glass-panel">
+          <aside className="sidebar">
             <div className="sidebar-title">
               <Calculator size={20} color="#3b82f6" /> Settings
             </div>
@@ -291,312 +294,232 @@ function App() {
           {/* ── DASHBOARD ── */}
           <div className="dashboard">
 
-            {/* Summary Cards */}
-            <div className="summary-grid">
-              <div className="summary-card glass-panel primary">
-                <span className="card-label"><DollarSign size={14}/> Direct API / Month</span>
-                <div className="card-value">{fmtUsd(totalApi)}</div>
-                <div className="card-sub">{model.name} · In {fmtUsd(costIn)} + Out {fmtUsd(costOut)}</div>
-              </div>
-              <div className="summary-card glass-panel amber">
-                <span className="card-label"><BarChart3 size={14}/> Annualized API Cost</span>
-                <div className="card-value">{fmtUsd(annualApi)}</div>
-                <div className="card-sub">12 months at current usage</div>
-              </div>
-              <div className="summary-card glass-panel green">
-                <span className="card-label"><TrendingDown size={14}/> Cheapest Sub Alternative</span>
-                <div className="card-value">{cheapestSub ? cheapestSub.name : '—'}</div>
-                <div className="card-sub">{cheapestSub ? `${fmtUsd(cheapestSub.price)}/mo · saves ${fmtUsd(totalApi - cheapestSub.price)}/mo` : 'API is cheaper than all subscriptions'}</div>
-              </div>
-              <div className="summary-card glass-panel purple">
-                <span className="card-label"><Trophy size={14}/> Best Value Plan</span>
-                <div className="card-value">{bestValue ? bestValue.name : '—'}</div>
-                <div className="card-sub">{bestValue ? `${fmtUsd(bestValue.price)}/mo · ${bestValue.ratio.toFixed(1)}× value ratio` : 'N/A'}</div>
-              </div>
+            {/* Sticky Tab Nav */}
+            <div className="dash-tabs">
+              <button className={`dash-tab ${activeTab==='summary'?'active':''}`} onClick={()=>setActiveTab('summary')}>
+                <DollarSign size={14}/> Summary
+              </button>
+              <button className={`dash-tab ${activeTab==='compare'?'active':''}`} onClick={()=>setActiveTab('compare')}>
+                <BarChart3 size={14}/> Compare
+              </button>
+              <button className={`dash-tab ${activeTab==='examples'?'active':''}`} onClick={()=>setActiveTab('examples')}>
+                <FileCode size={14}/> Examples
+              </button>
+              <button className={`dash-tab ${activeTab==='subs'?'active':''}`} onClick={()=>setActiveTab('subs')}>
+                <Trophy size={14}/> Subscriptions
+              </button>
             </div>
 
-            {/* ── DAILY / WEEKLY BREAKDOWN ── */}
-            <div className="cost-breakdown-row">
-              <div className="breakdown-cell">
-                <span className="breakdown-label">Cost Per Day</span>
-                <span className="breakdown-value">{fmtUsd(dailyApi)}</span>
-                <span className="breakdown-sub">÷ 30 days</span>
-              </div>
-              <div className="breakdown-cell">
-                <span className="breakdown-label">Cost Per Week</span>
-                <span className="breakdown-value">{fmtUsd(weeklyApi)}</span>
-                <span className="breakdown-sub">÷ 4.33 weeks</span>
-              </div>
-              <div className="breakdown-cell">
-                <span className="breakdown-label">Cost Per Year</span>
-                <span className="breakdown-value">{fmtUsd(annualApi)}</span>
-                <span className="breakdown-sub">× 12 months</span>
-              </div>
-            </div>
-
-            {/* ── TOKEN SIMULATOR (moved up!) ── */}
-            <div className="simulator-section">
-              <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
-              <h3>🧪 Token Simulator</h3>
-              <p>Paste a real prompt or expected response to estimate tokens and cost with {model.name}.</p>
-
-              <div className="sim-grid">
-                <div className="sim-card glass-panel input-side">
-                  <div className="sim-card-title">Your Prompt (Input)</div>
-                  <textarea className="token-textarea" placeholder="Paste your prompt, code, or context here…"
-                    value={simInput} onChange={e=>setSimInput(e.target.value)} />
-                  <div className="sim-stats">
-                    <div className="sim-meta">
-                      <strong>{fmt(simInTokens)}</strong> tokens<br/>
-                      <span className="sim-cost">{fmt(simInChars)} chars · {fmt(simInWords)} words · ≈ {fmtUsd(simInCost)} per call</span>
-                    </div>
-                    <button className="btn-sync blue" onClick={()=>setInputTokens(simInTokens)}>Sync to Input</button>
+            {/* ──── TAB: SUMMARY ──── */}
+            {activeTab === 'summary' && (
+              <div className="dash-tab-content">
+                <div className="summary-grid">
+                  <div className="summary-card glass-panel primary">
+                    <span className="card-label"><DollarSign size={14}/> Direct API / Month</span>
+                    <div className="card-value">{fmtUsd(totalApi)}</div>
+                    <div className="card-sub">{model.name} · In {fmtUsd(costIn)} + Out {fmtUsd(costOut)}</div>
+                  </div>
+                  <div className="summary-card glass-panel amber">
+                    <span className="card-label"><BarChart3 size={14}/> Annualized API Cost</span>
+                    <div className="card-value">{fmtUsd(annualApi)}</div>
+                    <div className="card-sub">12 months at current usage</div>
+                  </div>
+                  <div className="summary-card glass-panel green">
+                    <span className="card-label"><TrendingDown size={14}/> Cheapest Sub Alternative</span>
+                    <div className="card-value">{cheapestSub ? cheapestSub.name : '—'}</div>
+                    <div className="card-sub">{cheapestSub ? `${fmtUsd(cheapestSub.price)}/mo · saves ${fmtUsd(totalApi - cheapestSub.price)}/mo` : 'API is cheaper than all subscriptions'}</div>
+                  </div>
+                  <div className="summary-card glass-panel purple">
+                    <span className="card-label"><Trophy size={14}/> Best Value Plan</span>
+                    <div className="card-value">{bestValue ? bestValue.name : '—'}</div>
+                    <div className="card-sub">{bestValue ? `${fmtUsd(bestValue.price)}/mo · ${bestValue.ratio.toFixed(1)}× value ratio` : 'N/A'}</div>
                   </div>
                 </div>
-                <div className="sim-card glass-panel output-side">
-                  <div className="sim-card-title">AI Response (Output)</div>
-                  <textarea className="token-textarea" placeholder="Paste an expected AI response here…"
-                    value={simOutput} onChange={e=>setSimOutput(e.target.value)} />
-                  <div className="sim-stats">
-                    <div className="sim-meta">
-                      <strong>{fmt(simOutTokens)}</strong> tokens<br/>
-                      <span className="sim-cost">{fmt(simOutChars)} chars · {fmt(simOutWords)} words · ≈ {fmtUsd(simOutCost)} per call</span>
-                    </div>
-                    <button className="btn-sync green" onClick={()=>setOutputTokens(simOutTokens)}>Sync to Output</button>
+                <div className="cost-breakdown-row">
+                  <div className="breakdown-cell">
+                    <span className="breakdown-label">Cost Per Day</span>
+                    <span className="breakdown-value">{fmtUsd(dailyApi)}</span>
+                    <span className="breakdown-sub">÷ 30 days</span>
+                  </div>
+                  <div className="breakdown-cell">
+                    <span className="breakdown-label">Cost Per Week</span>
+                    <span className="breakdown-value">{fmtUsd(weeklyApi)}</span>
+                    <span className="breakdown-sub">÷ 4.33 weeks</span>
+                  </div>
+                  <div className="breakdown-cell">
+                    <span className="breakdown-label">Cost Per Year</span>
+                    <span className="breakdown-value">{fmtUsd(annualApi)}</span>
+                    <span className="breakdown-sub">× 12 months</span>
                   </div>
                 </div>
+                <div className="simulator-section">
+                  <h3>🧪 Token Simulator</h3>
+                  <p>Paste a real prompt or expected response to estimate tokens and cost with {model.name}.</p>
+                  <div className="sim-grid">
+                    <div className="sim-card glass-panel input-side">
+                      <div className="sim-card-title">Your Prompt (Input)</div>
+                      <textarea className="token-textarea" placeholder="Paste your prompt, code, or context here…"
+                        value={simInput} onChange={e=>setSimInput(e.target.value)} />
+                      <div className="sim-stats">
+                        <div className="sim-meta">
+                          <strong>{fmt(simInTokens)}</strong> tokens<br/>
+                          <span className="sim-cost">{fmt(simInChars)} chars · {fmt(simInWords)} words · ≈ {fmtUsd(simInCost)} per call</span>
+                        </div>
+                        <button className="btn-sync blue" onClick={()=>setInputTokens(simInTokens)}>Sync to Input</button>
+                      </div>
+                    </div>
+                    <div className="sim-card glass-panel output-side">
+                      <div className="sim-card-title">AI Response (Output)</div>
+                      <textarea className="token-textarea" placeholder="Paste an expected AI response here…"
+                        value={simOutput} onChange={e=>setSimOutput(e.target.value)} />
+                      <div className="sim-stats">
+                        <div className="sim-meta">
+                          <strong>{fmt(simOutTokens)}</strong> tokens<br/>
+                          <span className="sim-cost">{fmt(simOutChars)} chars · {fmt(simOutWords)} words · ≈ {fmtUsd(simOutCost)} per call</span>
+                        </div>
+                        <button className="btn-sync green" onClick={()=>setOutputTokens(simOutTokens)}>Sync to Output</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <AdSlot id="summary-bottom" />
               </div>
-            </div>
+            )}
 
-            {/* ── MODEL COMPARISON ── */}
-            <div className="compare-section">
-              <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
-              <h3>⚡ Model Comparison</h3>
-              <p>Select up to 3 models to compare side-by-side. Costs use your current profile settings.</p>
-
-              <div className="compare-picker">
-                {apiModels.map(m => (
-                  <button
-                    key={m.id}
-                    className={`model-pill ${compareIds.includes(m.id) ? 'selected' : ''}`}
-                    onClick={() => toggleCompare(m.id)}
-                    title={compareIds.includes(m.id) && compareIds.length === 1 ? 'At least 1 model required' : ''}
-                  >
-                    {m.provider}: {m.name}
-                  </button>
-                ))}
-              </div>
-
-              {compareIds.length >= 1 && (() => {
-                const cols = compareIds.map(id => apiModels.find(m => m.id === id)).filter(Boolean);
-                const colColors = ['#3b82f6','#8b5cf6','#f59e0b'];
-                const modelCost = (m) => {
-                  const inCost  = (sessions * inputTokens  / 1e6) * m.inputPrice;
-                  const outCost = (sessions * outputTokens / 1e6) * m.outputPrice;
-                  return inCost + outCost;
-                };
-                const speedColor = s => s==='Fast'?'#22c55e':s==='Medium'?'#f59e0b':'#ef4444';
-                const ratingStars = r => r==='Excellent'?'⭐⭐⭐':r==='Good'?'⭐⭐':'⭐';
-
-                return (
+            {/* ──── TAB: COMPARE ──── */}
+            {activeTab === 'compare' && (() => {
+              const cols = compareIds.map(id => apiModels.find(m => m.id === id)).filter(Boolean);
+              const colColors = ['#3b82f6','#8b5cf6','#f59e0b'];
+              const modelCost = (m) => (sessions*inputTokens/1e6)*m.inputPrice + (sessions*outputTokens/1e6)*m.outputPrice;
+              const speedColor = s => s==='Fast'?'#22c55e':s==='Medium'?'#f59e0b':'#ef4444';
+              const ratingStars = r => r==='Excellent'?'⭐⭐⭐':r==='Good'?'⭐⭐':'⭐';
+              return (
+                <div className="dash-tab-content">
+                  <h3>⚡ Model Comparison</h3>
+                  <p style={{fontSize:'0.85rem',color:'var(--text-secondary)',marginBottom:'1rem'}}>Select up to 3 models. Costs use your current profile settings.</p>
+                  <div className="compare-picker">
+                    {apiModels.map(m => (
+                      <button key={m.id} className={`model-pill ${compareIds.includes(m.id)?'selected':''}`} onClick={()=>toggleCompare(m.id)}>
+                        {m.provider}: {m.name}
+                      </button>
+                    ))}
+                  </div>
                   <div className="compare-table-wrap">
                     <div className="compare-grid" style={{gridTemplateColumns:`160px repeat(${cols.length}, 1fr)`}}>
-
-                      {/* Header row */}
                       <div className="compare-cell header-label"></div>
-                      {cols.map((m,i) => (
-                        <div key={m.id} className="compare-cell compare-header" style={{borderTop:`3px solid ${colColors[i]}`}}>
-                          <div className="cmp-name">{m.name}</div>
-                          <div className="cmp-provider">{m.provider}</div>
-                        </div>
-                      ))}
-
-                      {/* Rating */}
+                      {cols.map((m,i) => <div key={m.id} className="compare-cell compare-header" style={{borderTop:`3px solid ${colColors[i]}`}}><div className="cmp-name">{m.name}</div><div className="cmp-provider">{m.provider}</div></div>)}
                       <div className="compare-cell row-label">Overall Rating</div>
                       {cols.map(m => <div key={m.id} className="compare-cell">{ratingStars(m.rating)} <span className={`rating-badge rating-${m.rating?.toLowerCase()}`}>{m.rating}</span></div>)}
-
-                      {/* Speed */}
                       <div className="compare-cell row-label">Response Speed</div>
                       {cols.map(m => <div key={m.id} className="compare-cell"><span style={{color:speedColor(m.speed),fontWeight:600}}>● {m.speed}</span></div>)}
-
-                      {/* Context */}
                       <div className="compare-cell row-label">Context Window</div>
                       {cols.map(m => <div key={m.id} className="compare-cell cmp-context">{m.contextWindow}</div>)}
-
-                      {/* Specialties */}
                       <div className="compare-cell row-label">Specialties</div>
-                      {cols.map(m => (
-                        <div key={m.id} className="compare-cell">
-                          <div className="specialty-pills">
-                            {m.specialties?.map(s => <span key={s} className="specialty-pill">{s}</span>)}
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Input price */}
+                      {cols.map(m => <div key={m.id} className="compare-cell"><div className="specialty-pills">{m.specialties?.map(s=><span key={s} className="specialty-pill">{s}</span>)}</div></div>)}
                       <div className="compare-cell row-label">Input Price /1M</div>
                       {cols.map(m => <div key={m.id} className="compare-cell price-cell in">${m.inputPrice.toFixed(2)}</div>)}
-
-                      {/* Output price */}
                       <div className="compare-cell row-label">Output Price /1M</div>
                       {cols.map(m => <div key={m.id} className="compare-cell price-cell out">${m.outputPrice.toFixed(2)}</div>)}
-
-                      {/* Daily cost */}
                       <div className="compare-cell row-label">Daily API Cost</div>
                       {cols.map(m => <div key={m.id} className="compare-cell price-cell">{fmtUsd(modelCost(m)/30)}</div>)}
-
-                      {/* Monthly cost */}
                       <div className="compare-cell row-label">Monthly API Cost</div>
                       {cols.map(m => <div key={m.id} className="compare-cell price-cell primary">{fmtUsd(modelCost(m))}</div>)}
-
-                      {/* Annual cost */}
                       <div className="compare-cell row-label">Annual API Cost</div>
                       {cols.map(m => <div key={m.id} className="compare-cell price-cell">{fmtUsd(modelCost(m)*12)}</div>)}
-
-                      {/* Best for */}
                       <div className="compare-cell row-label">Best For</div>
                       {cols.map(m => <div key={m.id} className="compare-cell cmp-bestfor">{m.bestFor}</div>)}
-
-                      {/* Pros */}
                       <div className="compare-cell row-label">Pros ✓</div>
-                      {cols.map(m => (
-                        <div key={m.id} className="compare-cell">
-                          <ul className="pro-con-list">
-                            {m.pros?.map((p,i) => <li key={i} className="pro-item">{p}</li>)}
-                          </ul>
-                        </div>
-                      ))}
-
-                      {/* Cons */}
+                      {cols.map(m => <div key={m.id} className="compare-cell"><ul className="pro-con-list">{m.pros?.map((p,i)=><li key={i} className="pro-item">{p}</li>)}</ul></div>)}
                       <div className="compare-cell row-label">Cons ✗</div>
-                      {cols.map(m => (
-                        <div key={m.id} className="compare-cell">
-                          <ul className="pro-con-list">
-                            {m.cons?.map((c,i) => <li key={i} className="con-item">{c}</li>)}
-                          </ul>
-                        </div>
-                      ))}
-
+                      {cols.map(m => <div key={m.id} className="compare-cell"><ul className="pro-con-list">{m.cons?.map((c,i)=><li key={i} className="con-item">{c}</li>)}</ul></div>)}
                     </div>
                   </div>
-                );
-              })()}
-            </div>
+                  <AdSlot id="compare-bottom" />
+                </div>
+              );
+            })()}
 
-            {/* ── EXAMPLE PROMPTS ── */}
-            <div className="examples-section">
-              <div className="section-divider" style={{marginBottom:'1.25rem'}}></div>
-              <h3>📋 Real-World Examples</h3>
-              <p>See what actual vibe-coding sessions look like — with token counts and costs using {model.name}.</p>
-
-              <div className="example-list">
-                {examplePrompts.map(ex => {
-                  const isOpen = expandedExample === ex.id;
-                  const cost = exCost(ex.inputTokens, ex.outputTokens);
-                  const ratio = (ex.outputTokens / ex.inputTokens).toFixed(1);
-                  const diffClass = ex.difficulty === 'Light' ? 'diff-light' : ex.difficulty === 'Medium' ? 'diff-medium' : 'diff-heavy';
-                  
-                  return (
-                    <div key={ex.id} className="example-card" onClick={() => setExpandedExample(isOpen ? null : ex.id)}>
-                      <div className="example-header">
-                        <h4>
-                          <FileCode size={16} />
-                          {ex.title}
-                          <span className={`diff-badge ${diffClass}`}>{ex.difficulty}</span>
-                          <span className="diff-badge" style={{background:'rgba(124,58,237,0.15)', color:'#a78bfa', border:'1px solid rgba(124,58,237,0.3)'}}>{ex.category}</span>
-                        </h4>
-                        {isOpen ? <ChevronUp size={18} color="var(--text-secondary)" /> : <ChevronDown size={18} color="var(--text-secondary)" />}
-                      </div>
-                      <p className="example-desc">{ex.description}</p>
-                      <div className="example-metrics">
-                        <div className="example-metric">
-                          <span className="example-metric-label">Input</span>
-                          <span className="example-metric-value blue">{fmt(ex.inputTokens)} tokens</span>
-                        </div>
-                        <div className="example-metric">
-                          <span className="example-metric-label">Output</span>
-                          <span className="example-metric-value green">{fmt(ex.outputTokens)} tokens</span>
-                        </div>
-                        <div className="example-metric">
-                          <span className="example-metric-label">Ratio</span>
-                          <span className="example-metric-value">{ratio}×</span>
-                        </div>
-                        <div className="example-metric">
-                          <span className="example-metric-label">API Cost</span>
-                          <span className="example-metric-value purple">{fmtUsd(cost)}</span>
-                        </div>
-                      </div>
-
-                      {isOpen && (
-                        <div className="example-detail">
-                          <div style={{marginBottom:'0.75rem'}}>
-                            <div className="example-code-label">Input Prompt</div>
-                            <div className="example-code">{ex.input}</div>
+            {/* ──── TAB: EXAMPLES ──── */}
+            {activeTab === 'examples' && (
+              <div className="dash-tab-content">
+                <div className="examples-section">
+                  <h3>📋 Real-World Examples</h3>
+                  <p>See what actual sessions look like — with token counts and costs using {model.name}.</p>
+                  <div className="example-list">
+                    {examplePrompts.map(ex => {
+                      const isOpen = expandedExample === ex.id;
+                      const cost = exCost(ex.inputTokens, ex.outputTokens);
+                      const ratio = (ex.outputTokens / ex.inputTokens).toFixed(1);
+                      const diffClass = ex.difficulty==='Light'?'diff-light':ex.difficulty==='Medium'?'diff-medium':'diff-heavy';
+                      return (
+                        <div key={ex.id} className="example-card" onClick={()=>setExpandedExample(isOpen?null:ex.id)}>
+                          <div className="example-header">
+                            <h4>
+                              <FileCode size={16}/>{ex.title}
+                              <span className={`diff-badge ${diffClass}`}>{ex.difficulty}</span>
+                              <span className="diff-badge" style={{background:'rgba(124,58,237,0.15)',color:'#a78bfa',border:'1px solid rgba(124,58,237,0.3)'}}>{ex.category}</span>
+                            </h4>
+                            {isOpen?<ChevronUp size={18} color="var(--text-secondary)"/>:<ChevronDown size={18} color="var(--text-secondary)"/>}
                           </div>
-                          <div>
-                            <div className="example-code-label">AI Output</div>
-                            <div className="example-code">{ex.output}</div>
+                          <p className="example-desc">{ex.description}</p>
+                          <div className="example-metrics">
+                            <div className="example-metric"><span className="example-metric-label">Input</span><span className="example-metric-value blue">{fmt(ex.inputTokens)} tokens</span></div>
+                            <div className="example-metric"><span className="example-metric-label">Output</span><span className="example-metric-value green">{fmt(ex.outputTokens)} tokens</span></div>
+                            <div className="example-metric"><span className="example-metric-label">Ratio</span><span className="example-metric-value">{ratio}×</span></div>
+                            <div className="example-metric"><span className="example-metric-label">API Cost</span><span className="example-metric-value purple">{fmtUsd(cost)}</span></div>
                           </div>
+                          {isOpen && (
+                            <div className="example-detail">
+                              <div style={{marginBottom:'0.75rem'}}><div className="example-code-label">Input Prompt</div><div className="example-code">{ex.input}</div></div>
+                              <div><div className="example-code-label">AI Output</div><div className="example-code">{ex.output}</div></div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* ── AD SLOT 2 ── */}
-            <AdSlot id="mid" />
-
-            {/* ── SUBSCRIPTION BREAKDOWN ── */}
-            <div>
-              <h3 style={{color:'var(--text-secondary)', marginBottom:'0.75rem', fontSize:'1.1rem'}}>Subscription Breakdown</h3>
-              <div className="provider-filters">
-                {providers.map(p => (
-                  <button key={p} className={`filter-pill ${providerFilter===p?'active':''}`} onClick={()=>setProviderFilter(p)}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="sub-list">
-              {filteredSubs.map(sub => {
-                const isWorthIt = totalApi > sub.price;
-                const badgeClass = sub.confidence==='exact' ? 'badge-exact' : sub.confidence==='high' ? 'badge-high' : 'badge-low';
-                const SubIcon = sub.confidence==='exact' ? CheckCircle2 : AlertTriangle;
-
-                return (
-                  <div key={sub.id} className="sub-item">
-                    <div className="sub-info">
-                      <h4>
-                        {sub.name}
-                        <span className={`badge ${badgeClass}`}><SubIcon size={10}/> {sub.confidence}</span>
-                      </h4>
-                      <p>{sub.description}</p>
-                      <div className="equivalence">
-                        API-equivalent value: <strong style={{color:'#fff'}}>{fmtUsd(sub.apiValueEstimate[0])} – {fmtUsd(sub.apiValueEstimate[1])}</strong> /mo
-                      </div>
-                      <div className={`break-even-text ${isWorthIt?'worth-it':''}`}>
-                        {isWorthIt
-                          ? `✅ Your ${fmtUsd(totalApi)}/mo API usage exceeds this plan — subscription saves ${fmtUsd(totalApi - sub.price)}/mo.`
-                          : `⚠️ At ${fmtUsd(totalApi)}/mo, direct API is ${fmtUsd(sub.price - totalApi)}/mo cheaper.`}
-                      </div>
-                    </div>
-                    <div className="sub-price">
-                      <div className="sub-price-val">{fmtUsd(sub.price)}</div>
-                      <div className="sub-price-annual">{fmtUsd(sub.price * 12)}/yr</div>
-                    </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-              {filteredSubs.length === 0 && (
-                <p style={{color:'var(--text-secondary)', textAlign:'center', padding:'2rem 0'}}>No subscriptions match this filter.</p>
-              )}
-            </div>
+                </div>
+                <AdSlot id="examples-bottom" />
+              </div>
+            )}
 
-            {/* ── AD SLOT 3 ── */}
-            <AdSlot id="bottom" />
+            {/* ──── TAB: SUBSCRIPTIONS ──── */}
+            {activeTab === 'subs' && (
+              <div className="dash-tab-content">
+                <div>
+                  <h3 style={{color:'var(--text-primary)',marginBottom:'0.75rem',fontSize:'1.1rem'}}>Subscription Breakdown</h3>
+                  <div className="provider-filters">
+                    {providers.map(p => <button key={p} className={`filter-pill ${providerFilter===p?'active':''}`} onClick={()=>setProviderFilter(p)}>{p}</button>)}
+                  </div>
+                </div>
+                <div className="sub-list">
+                  {filteredSubs.map(sub => {
+                    const isWorthIt = totalApi > sub.price;
+                    const badgeClass = sub.confidence==='exact'?'badge-exact':sub.confidence==='high'?'badge-high':'badge-low';
+                    const SubIcon = sub.confidence==='exact'?CheckCircle2:AlertTriangle;
+                    return (
+                      <div key={sub.id} className="sub-item">
+                        <div className="sub-info">
+                          <h4>{sub.name}<span className={`badge ${badgeClass}`}><SubIcon size={10}/> {sub.confidence}</span></h4>
+                          <p>{sub.description}</p>
+                          <div className="equivalence">API-equivalent value: <strong style={{color:'#fff'}}>{fmtUsd(sub.apiValueEstimate[0])} – {fmtUsd(sub.apiValueEstimate[1])}</strong> /mo</div>
+                          <div className={`break-even-text ${isWorthIt?'worth-it':''}`}>
+                            {isWorthIt ? `✅ Your ${fmtUsd(totalApi)}/mo API usage exceeds this plan — subscription saves ${fmtUsd(totalApi-sub.price)}/mo.`
+                              : `⚠️ At ${fmtUsd(totalApi)}/mo, direct API is ${fmtUsd(sub.price-totalApi)}/mo cheaper.`}
+                          </div>
+                        </div>
+                        <div className="sub-price">
+                          <div className="sub-price-val">{fmtUsd(sub.price)}</div>
+                          <div className="sub-price-annual">{fmtUsd(sub.price*12)}/yr</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {filteredSubs.length===0 && <p style={{color:'var(--text-secondary)',textAlign:'center',padding:'2rem 0'}}>No subscriptions match this filter.</p>}
+                </div>
+                <AdSlot id="subs-bottom" />
+              </div>
+            )}
 
           </div>{/* end dashboard */}
         </div>{/* end calc-layout */}
