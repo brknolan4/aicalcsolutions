@@ -180,8 +180,8 @@ function App() {
         </div>
         <div className="feature-card">
           <div className="feature-icon amber"><BarChart3 size={24} /></div>
-          <h3>Break-Even Analysis</h3>
-          <p>See exactly when a subscription saves money vs. direct API calls.</p>
+          <h3>Side-by-Side Comparisons</h3>
+          <p>Compare plans, model abilities, and exact token costs natively side-by-side.</p>
         </div>
         <div className="feature-card">
           <div className="feature-icon purple"><Code2 size={24} /></div>
