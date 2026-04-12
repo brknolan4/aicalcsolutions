@@ -51,7 +51,7 @@ function App() {
   const [expandedExample, setExpandedExample] = useState(null);
 
   /* Model Comparison */
-  const [compareIds, setCompareIds] = useState(['gpt-5-4']);
+  const [compareIds, setCompareIds] = useState(['gpt-5-4', 'claude-sonnet-4-6', 'gemini-3-1-pro']);
   const toggleCompare = (id) => {
     setCompareIds(prev =>
       prev.includes(id)
