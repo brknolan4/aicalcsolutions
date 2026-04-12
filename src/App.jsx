@@ -449,8 +449,7 @@ function App() {
                         <thead>
                           <tr>
                             <th>Plan</th>
-                            <th>Mo. Cost</th>
-                            <th>Ann. Cost</th>
+                            <th>Cost</th>
                             {cols.map((m,i) => (
                               <th key={m.id} style={{borderTop:`3px solid ${colColors[i]}`}}>
                                 {m.name} — Tokens &amp; Savings
@@ -467,8 +466,10 @@ function App() {
                                   <div style={{fontWeight:600,color:'var(--text-primary)',fontSize:'0.8rem'}}>{sub.name}</div>
                                   <div style={{fontSize:'0.68rem',color:'var(--text-secondary)'}}>{sub.provider}</div>
                                 </td>
-                                <td style={{fontWeight:700,color:'#60a5fa',whiteSpace:'nowrap'}}>{fmtUsd(sub.price)}/mo</td>
-                                <td style={{color:'var(--text-secondary)',fontSize:'0.75rem',whiteSpace:'nowrap'}}>{fmtUsd(sub.price*12)}/yr</td>
+                                <td style={{whiteSpace:'nowrap'}}>
+                                  <div style={{fontWeight:700,color:'#60a5fa'}}>{fmtUsd(sub.price)}/mo</div>
+                                  <div style={{color:'var(--text-secondary)',fontSize:'0.75rem',marginTop:'0.15rem'}}>{fmtUsd(sub.price*12)}/yr</div>
+                                </td>
                                 {cols.map(m => {
                                   const tokEst = Math.round(midVal / m.inputPrice * 1e6);
                                   const tokStr = tokEst >= 1e6 ? `~${(tokEst/1e6).toFixed(1)}M` : `~${(tokEst/1e3).toFixed(0)}K`;
