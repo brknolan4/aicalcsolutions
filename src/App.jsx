@@ -404,8 +404,8 @@ function App() {
                       </button>
                     ))}
                   </div>
-                  <div className="compare-table-wrap" style={{ width: 'fit-content', maxWidth: '100%', margin: '0 auto' }}>
-                    <div className="compare-grid" style={{gridTemplateColumns:`120px repeat(${cols.length}, minmax(150px, 260px))`}}>
+                  <div className="compare-table-wrap" style={{ width: 'fit-content', maxWidth: '100%', margin: '0' }}>
+                    <div className="compare-grid" style={{gridTemplateColumns:`120px repeat(${cols.length}, minmax(130px, 220px))`}}>
                       <div className="compare-cell header-label"></div>
                       {cols.map((m,i) => <div key={m.id} className="compare-cell compare-header" style={{borderTop:`3px solid ${colColors[i]}`}}><div className="cmp-name">{m.name}</div><div className="cmp-provider">{m.provider}</div></div>)}
                       <div className="compare-cell row-label">Overall Rating</div>
@@ -444,7 +444,7 @@ function App() {
                       Monthly subscription prices with approximate token capacity based on each selected model's pricing.
                       Token estimates use the midpoint API-equivalent value ÷ model input price.
                     </p>
-                    <div className="compare-table-wrap" style={{ width: 'fit-content', maxWidth: '100%', margin: '0 auto' }}>
+                    <div className="compare-table-wrap" style={{ width: 'fit-content', maxWidth: '100%', margin: '0' }}>
                       <table className="sub-compare-table">
                         <thead>
                           <tr>
