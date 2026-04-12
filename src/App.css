@@ -2,7 +2,7 @@
    LAYOUT
    ============================ */
 .app-wrapper {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 0 2rem;
 }
@@ -868,8 +868,8 @@
   letter-spacing: 0.04em;
   display: flex;
   align-items: center;
-  white-space: nowrap;
   padding: 0.5rem 0.65rem;
+  line-height: 1.25;
 }
 .cmp-name {
   font-size: 0.82rem;
