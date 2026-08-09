@@ -3,8 +3,11 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart2,
+  BookOpen,
   Calendar,
   Check,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Download,
   FileSpreadsheet,
@@ -23,20 +26,121 @@ import { absoluteUrl, faqSchema, webAppSchema } from '../lib/seo'
 
 const POPULAR_TICKERS = ['AAPL', 'SPY', 'TSLA', 'NVDA', 'QQQ', 'MSFT', 'AMZN', 'AMD', 'META', 'GOOGL']
 
+// Detailed header definitions for glossary & tooltips
+const HEADER_GLOSSARY = [
+  {
+    key: 'contractSymbol',
+    label: 'Contract Symbol',
+    short: 'OCC Ticker',
+    description: 'The standardized OCC (Options Clearing Corporation) identifier for the contract (e.g. AAPL260821C00190000).',
+  },
+  {
+    key: 'optionType',
+    label: 'Option Type',
+    short: 'CALL / PUT',
+    description: 'CALL gives you the right to BUY 100 shares at the strike. PUT gives you the right to SELL 100 shares at the strike.',
+  },
+  {
+    key: 'strike',
+    label: 'Strike Price',
+    short: 'Execution Price',
+    description: 'The predetermined price at which the underlying stock can be bought (Call) or sold (Put) upon exercise.',
+  },
+  {
+    key: 'lastPrice',
+    label: 'Last Price',
+    short: 'Premium',
+    description: 'The most recent price per share paid for the contract. Multiply by 100 to get total contract price.',
+  },
+  {
+    key: 'bidAsk',
+    label: 'Bid / Ask',
+    short: 'Market Spread',
+    description: 'Bid is the highest price buyers offer; Ask is the lowest price sellers accept. Narrow spreads mean higher liquidity.',
+  },
+  {
+    key: 'change',
+    label: 'Change ($ / %)',
+    short: 'Daily Price Shift',
+    description: 'Dollar and percentage change in option contract price compared to the previous trading session close.',
+  },
+  {
+    key: 'volume',
+    label: 'Volume',
+    short: 'Daily Contracts Traded',
+    description: 'Total number of option contracts bought and sold during the current trading session.',
+  },
+  {
+    key: 'openInterest',
+    label: 'Open Interest (OI)',
+    short: 'Active Contracts',
+    description: 'Total number of active outstanding contracts that have been opened but not yet settled or closed.',
+  },
+  {
+    key: 'iv',
+    label: 'Implied Volatility (IV)',
+    short: 'Expected Volatility %',
+    description: 'The annualized market expectation of stock price volatility. Higher IV means higher option premiums.',
+  },
+  {
+    key: 'delta',
+    label: 'Delta (Δ)',
+    short: 'Price Sensitivity',
+    description: 'Expected change in option price per $1 move in the stock ($0 to 1.0 for Calls, -1.0 to 0 for Puts). Also estimates probability of expiring ITM.',
+  },
+  {
+    key: 'gamma',
+    label: 'Gamma (Γ)',
+    short: 'Delta Acceleration',
+    description: 'Rate of change in Delta per $1 move in stock price. Measures how fast Delta changes as stock moves.',
+  },
+  {
+    key: 'theta',
+    label: 'Theta (Θ)',
+    short: 'Daily Time Decay',
+    description: 'Dollar amount the option premium loses each calendar day due to time decay (always negative for long options).',
+  },
+  {
+    key: 'vega',
+    label: 'Vega (ν)',
+    short: 'Volatility Sensitivity',
+    description: 'Expected change in option premium per 1% change in Implied Volatility.',
+  },
+  {
+    key: 'rho',
+    label: 'Rho (ρ)',
+    short: 'Interest Rate Impact',
+    description: 'Expected change in option price per 1% change in risk-free interest rates.',
+  },
+  {
+    key: 'itm',
+    label: 'ITM / OTM',
+    short: 'Moneyness Status',
+    description: 'In-The-Money (ITM) has intrinsic value (e.g. Call strike < Stock price). Out-of-The-Money (OTM) has time value only.',
+  },
+]
+
 export default function OptionsExtractorPage() {
   const [symbol, setSymbol] = useState('AAPL')
   const [inputSymbol, setInputSymbol] = useState('AAPL')
+
+  // Date selection state
+  const [dateMode, setDateMode] = useState('SINGLE') // SINGLE or RANGE
   const [selectedDate, setSelectedDate] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [showGlossary, setShowGlossary] = useState(true)
 
   // Filters
   const [typeFilter, setTypeFilter] = useState('ALL') // ALL, CALLS, PUTS
   const [moneynessFilter, setMoneynessFilter] = useState('ALL') // ALL, ITM, OTM, NEAR
   const [strikeSearch, setStrikeSearch] = useState('')
-  const [viewTab, setViewTab] = useState('COMBINED') // COMBINED, CALLS, PUTS
+  const [viewTab, setViewTab] = useState('COMBINED')
 
   const fetchOptions = async (targetSymbol, expDate = '') => {
     setLoading(true)
@@ -44,8 +148,16 @@ export default function OptionsExtractorPage() {
     try {
       const json = await fetchOptionsData(targetSymbol, expDate)
       setData(json)
-      if (json.selectedExpiration?.dateStr) {
+
+      if (json.selectedExpiration?.dateStr && !selectedDate) {
         setSelectedDate(json.selectedExpiration.dateStr)
+        setStartDate(json.selectedExpiration.dateStr)
+      }
+      if (json.expirationDates && json.expirationDates.length > 0) {
+        const lastIndex = Math.min(3, json.expirationDates.length - 1)
+        if (!endDate) {
+          setEndDate(json.expirationDates[lastIndex].dateStr)
+        }
       }
     } catch (err) {
       console.error('Error fetching options:', err)
@@ -64,22 +176,22 @@ export default function OptionsExtractorPage() {
     const clean = inputSymbol.trim().toUpperCase()
     if (!clean) return
     setSymbol(clean)
-    fetchOptions(clean)
+    fetchOptions(clean, dateMode === 'SINGLE' ? selectedDate : startDate)
   }
 
   const handlePresetClick = (ticker) => {
     setInputSymbol(ticker)
     setSymbol(ticker)
-    fetchOptions(ticker)
+    fetchOptions(ticker, dateMode === 'SINGLE' ? selectedDate : startDate)
   }
 
-  const handleDateChange = (e) => {
+  const handleSingleDateChange = (e) => {
     const newDate = e.target.value
     setSelectedDate(newDate)
     fetchOptions(symbol, newDate)
   }
 
-  // Filter logic for contracts table & CSV
+  // Filter logic for contracts table & CSV export
   const filteredContracts = useMemo(() => {
     if (!data) return []
     const price = data.underlyingPrice || 0
@@ -94,7 +206,14 @@ export default function OptionsExtractorPage() {
     }
 
     return pool.filter((c) => {
-      // Moneyness filter
+      // Date Range Filter
+      if (dateMode === 'RANGE' && (startDate || endDate)) {
+        const contractDate = c.expiration
+        if (startDate && contractDate < startDate) return false
+        if (endDate && contractDate > endDate) return false
+      }
+
+      // Moneyness Filter
       if (moneynessFilter === 'ITM' && !c.inTheMoney) return false
       if (moneynessFilter === 'OTM' && c.inTheMoney) return false
       if (moneynessFilter === 'NEAR') {
@@ -102,7 +221,7 @@ export default function OptionsExtractorPage() {
         if (pctDiff > 0.08) return false
       }
 
-      // Strike / Contract Search filter
+      // Strike / Contract Symbol Search
       if (strikeSearch.trim()) {
         const q = strikeSearch.trim().toLowerCase()
         const strikeStr = String(c.strike)
@@ -114,13 +233,13 @@ export default function OptionsExtractorPage() {
 
       return true
     }).sort((a, b) => a.strike - b.strike || a.optionType.localeCompare(b.optionType))
-  }, [data, typeFilter, moneynessFilter, strikeSearch, viewTab])
+  }, [data, typeFilter, moneynessFilter, strikeSearch, viewTab, dateMode, startDate, endDate])
 
   const handleDownloadCsv = (exportType = 'ALL') => {
     if (!data) return
     let exportList = filteredContracts
-    if (exportType === 'CALLS') exportList = data.calls || []
-    if (exportType === 'PUTS') exportList = data.puts || []
+    if (exportType === 'CALLS') exportList = filteredContracts.filter(c => c.optionType === 'CALL')
+    if (exportType === 'PUTS') exportList = filteredContracts.filter(c => c.optionType === 'PUT')
     downloadOptionsCsv(data, exportList, exportType)
   }
 
@@ -144,7 +263,7 @@ export default function OptionsExtractorPage() {
       faqSchema([
         {
           question: 'How do I download stock options data and Greeks into Excel?',
-          answer: 'Enter a ticker symbol like AAPL or SPY, select an expiration date, and click Download CSV. Open Microsoft Excel or Google Sheets to inspect Calls, Puts, Volume, Open Interest, Delta, Gamma, Theta, Vega, and Rho.',
+          answer: 'Enter a ticker symbol like AAPL or SPY, select an expiration date or date range using the calendar control, and click Download CSV.',
         },
         {
           question: 'Are Option Greeks included in the CSV extraction?',
@@ -166,18 +285,23 @@ export default function OptionsExtractorPage() {
       {/* Hero Header */}
       <section className="landing-hero options-hero">
         <span className="hero-eyebrow">
-          <FileSpreadsheet size={14} /> Free Options Tool · Excel & Google Sheets CSV Export with Greeks
+          <FileSpreadsheet size={14} /> Free Options Tool · Calendar Date Picker · Excel CSV Export
         </span>
         <h1 className="hero-headline">
-          Stock Options <em>Data Extractor</em> & CSV Downloader
+          Stock Options <em>Data Extractor</em> & CSV Engine
         </h1>
         <p className="hero-sub">
-          Extract complete options chains for any US stock symbol into clean, Excel-formatted CSV files. Analyze Calls, Puts, strike prices, volume, open interest, implied volatility, and Option Greeks (Delta, Gamma, Theta, Vega, Rho).
+          Extract complete options chains for any stock symbol into clean CSV files formatted for Microsoft Excel & Google Sheets. Includes full Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) and custom date range filters.
         </p>
       </section>
 
-      {/* Symbol Search & Controls Bar */}
+      {/* Step 1: Symbol & Controls Panel */}
       <section className="options-control-section glass-panel">
+        <div className="section-step-header">
+          <span className="step-number">1</span>
+          <h2>Select Stock Symbol & Expiration Dates</h2>
+        </div>
+
         <form onSubmit={handleSymbolSubmit} className="options-search-form">
           <div className="search-input-group">
             <Search className="search-icon" size={18} />
@@ -190,7 +314,7 @@ export default function OptionsExtractorPage() {
               maxLength={10}
             />
             <button type="submit" className="cta-btn search-submit-btn" disabled={loading}>
-              {loading ? <RefreshCw className="spin-icon" size={16} /> : 'Extract Options'}
+              {loading ? <RefreshCw className="spin-icon" size={16} /> : 'Extract Data'}
             </button>
           </div>
         </form>
@@ -211,43 +335,93 @@ export default function OptionsExtractorPage() {
           </div>
         </div>
 
-        {/* Expiration Date Selector & Data Refresh */}
-        {data && data.expirationDates && data.expirationDates.length > 0 && (
-          <div className="options-meta-toolbar">
-            <div className="toolbar-group">
-              <label htmlFor="expiration-select" className="toolbar-label">
-                <Calendar size={15} /> Expiration Date:
-              </label>
-              <select
-                id="expiration-select"
-                value={selectedDate}
-                onChange={handleDateChange}
-                className="toolbar-select"
-                disabled={loading}
-              >
-                {data.expirationDates.map((exp) => (
-                  <option key={exp.dateStr} value={exp.dateStr}>
-                    {exp.formatted} ({exp.dateStr})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="toolbar-actions">
+        {/* Date Selection Controls */}
+        <div className="date-selection-box">
+          <div className="date-mode-toggle">
+            <span className="control-label"><Calendar size={15} /> Expiration Selection Mode:</span>
+            <div className="pill-toggle">
               <button
-                onClick={() => fetchOptions(symbol, selectedDate)}
-                className="secondary-btn icon-btn"
-                title="Refresh options data"
-                disabled={loading}
+                onClick={() => setDateMode('SINGLE')}
+                className={`pill-btn ${dateMode === 'SINGLE' ? 'active' : ''}`}
               >
-                <RefreshCw size={14} className={loading ? 'spin-icon' : ''} /> Refresh
+                Specific Expiration Date
+              </button>
+              <button
+                onClick={() => setDateMode('RANGE')}
+                className={`pill-btn ${dateMode === 'RANGE' ? 'active' : ''}`}
+              >
+                Date Range (Calendar)
               </button>
             </div>
           </div>
-        )}
+
+          {dateMode === 'SINGLE' ? (
+            <div className="date-picker-row">
+              <div className="picker-item">
+                <label htmlFor="single-date-select">Select Available Expiration:</label>
+                {data && data.expirationDates && data.expirationDates.length > 0 ? (
+                  <select
+                    id="single-date-select"
+                    value={selectedDate}
+                    onChange={handleSingleDateChange}
+                    className="styled-date-input"
+                    disabled={loading}
+                  >
+                    {data.expirationDates.map((exp) => (
+                      <option key={exp.dateStr} value={exp.dateStr}>
+                        {exp.formatted} ({exp.dateStr})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={handleSingleDateChange}
+                    className="styled-date-input"
+                  />
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="date-picker-row date-range-inputs">
+              <div className="picker-item">
+                <label htmlFor="start-date-input">From Date (Calendar):</label>
+                <input
+                  id="start-date-input"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="styled-date-input"
+                />
+              </div>
+
+              <div className="picker-item">
+                <label htmlFor="end-date-input">To Date (Calendar):</label>
+                <input
+                  id="end-date-input"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="styled-date-input"
+                />
+              </div>
+
+              <div className="range-apply-box">
+                <button
+                  onClick={() => fetchOptions(symbol, startDate)}
+                  className="secondary-btn apply-range-btn"
+                  disabled={loading}
+                >
+                  <RefreshCw size={14} className={loading ? 'spin-icon' : ''} /> Filter Range
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
-      {/* Error state alert */}
+      {/* Error Banner */}
       {error && (
         <div className="error-banner">
           <Info size={18} />
@@ -262,14 +436,14 @@ export default function OptionsExtractorPage() {
       {loading && !data && (
         <div className="loading-container glass-panel">
           <RefreshCw className="spin-icon large-spinner" size={36} />
-          <p>Extracting live options chain data for <strong>{symbol}</strong>...</p>
+          <p>Extracting options chain data & computing Greeks for <strong>{symbol}</strong>...</p>
         </div>
       )}
 
-      {/* Main Options Data Content */}
+      {/* Main Options Data View */}
       {data && (
         <>
-          {/* Key Metrics Cards */}
+          {/* Key Metrics Summary Cards */}
           <section className="options-kpi-grid">
             <div className="kpi-card glass-panel">
               <span className="kpi-label">Stock Price ({data.symbol})</span>
@@ -284,12 +458,14 @@ export default function OptionsExtractorPage() {
             </div>
 
             <div className="kpi-card glass-panel">
-              <span className="kpi-label">Expiration & DTE</span>
+              <span className="kpi-label">Active Date & DTE</span>
               <div className="kpi-value-row">
-                <span className="kpi-main-val">{data.selectedExpiration?.formatted || data.selectedExpiration?.dateStr}</span>
+                <span className="kpi-main-val">
+                  {dateMode === 'RANGE' ? `${startDate || 'Start'} to ${endDate || 'End'}` : (data.selectedExpiration?.formatted || data.selectedExpiration?.dateStr)}
+                </span>
               </div>
               <span className="kpi-sub badge-sub">
-                {data.selectedExpiration?.dte} Days to Expiration
+                {filteredContracts.length} Option Contracts Found
               </span>
             </div>
 
@@ -310,17 +486,17 @@ export default function OptionsExtractorPage() {
                 <span className="kpi-main-val">${typeof data.summary?.maxPain === 'number' ? data.summary.maxPain.toFixed(2) : '—'}</span>
                 <span className="kpi-icon-badge"><TrendingUp size={16} /></span>
               </div>
-              <span className="kpi-sub">Estimated minimum loss strike</span>
+              <span className="kpi-sub">Min loss strike price</span>
             </div>
           </section>
 
-          {/* Primary CSV Download Action Banner */}
+          {/* Primary CSV Download Banner */}
           <section className="csv-download-banner glass-panel">
             <div className="csv-banner-content">
               <div className="csv-banner-text">
-                <h2>Ready for Excel or Google Sheets</h2>
+                <h2>Download Formatted CSV File</h2>
                 <p>
-                  Export {filteredContracts.length} option contracts with <strong>Full Greeks (Δ, Γ, Θ, ν, ρ)</strong> for <strong>{data.symbol}</strong> ({data.selectedExpiration?.dateStr}).
+                  Export <strong>{filteredContracts.length} option contracts</strong> with full Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) into Microsoft Excel or Google Sheets.
                 </p>
               </div>
 
@@ -349,7 +525,7 @@ export default function OptionsExtractorPage() {
                 <button
                   onClick={handleCopyCsv}
                   className="secondary-btn copy-btn"
-                  title="Copy CSV data to clipboard"
+                  title="Copy CSV to clipboard"
                 >
                   {copied ? <Check size={16} className="green-icon" /> : <Copy size={16} />}
                   {copied ? 'Copied!' : 'Copy'}
@@ -358,11 +534,11 @@ export default function OptionsExtractorPage() {
             </div>
           </section>
 
-          {/* Interactive Filter & View Bar */}
+          {/* Table Filters Toolbar */}
           <section className="table-controls-section glass-panel">
             <div className="filter-toolbar">
               <div className="filter-group">
-                <span className="filter-label"><Sliders size={14} /> Type:</span>
+                <span className="filter-label"><Sliders size={14} /> Option Type:</span>
                 <div className="pill-toggle">
                   <button
                     onClick={() => { setTypeFilter('ALL'); setViewTab('COMBINED'); }}
@@ -374,13 +550,13 @@ export default function OptionsExtractorPage() {
                     onClick={() => { setTypeFilter('CALLS'); setViewTab('CALLS'); }}
                     className={`pill-btn ${typeFilter === 'CALLS' ? 'active' : ''}`}
                   >
-                    Calls ({data.calls?.length || 0})
+                    Calls
                   </button>
                   <button
                     onClick={() => { setTypeFilter('PUTS'); setViewTab('PUTS'); }}
                     className={`pill-btn ${typeFilter === 'PUTS' ? 'active' : ''}`}
                   >
-                    Puts ({data.puts?.length || 0})
+                    Puts
                   </button>
                 </div>
               </div>
@@ -427,34 +603,35 @@ export default function OptionsExtractorPage() {
             </div>
           </section>
 
-          {/* Options Data Table */}
+          {/* Options Chain Data Table */}
           <section className="options-table-section glass-panel">
             <div className="table-responsive-container">
               <table className="options-data-table">
                 <thead>
                   <tr>
-                    <th>Contract Symbol</th>
-                    <th>Type</th>
-                    <th>Strike</th>
-                    <th>Last Price</th>
-                    <th>Bid</th>
-                    <th>Ask</th>
-                    <th>Change</th>
-                    <th>Volume</th>
-                    <th>Open Int</th>
-                    <th>IV</th>
-                    <th>Delta (Δ)</th>
-                    <th>Gamma (Γ)</th>
-                    <th>Theta (Θ)</th>
-                    <th>Vega (ν)</th>
-                    <th>ITM</th>
+                    <th title="Standardized OCC Option Contract Ticker">Contract Symbol</th>
+                    <th title="CALL (Right to Buy) or PUT (Right to Sell)">Type</th>
+                    <th title="Expiration Date">Exp Date</th>
+                    <th title="Pre-determined Execution Price">Strike</th>
+                    <th title="Last Traded Premium Price">Last</th>
+                    <th title="Highest Buyer Offer">Bid</th>
+                    <th title="Lowest Seller Offer">Ask</th>
+                    <th title="Daily Price Shift ($)">Change</th>
+                    <th title="Contracts Traded Today">Volume</th>
+                    <th title="Active Outstanding Contracts">Open Int</th>
+                    <th title="Implied Volatility %">IV</th>
+                    <th title="Delta (Δ) Price Sensitivity">Delta (Δ)</th>
+                    <th title="Gamma (Γ) Delta Rate of Change">Gamma (Γ)</th>
+                    <th title="Theta (Θ) Daily Time Decay">Theta (Θ)</th>
+                    <th title="Vega (ν) Volatility Sensitivity">Vega (ν)</th>
+                    <th title="In The Money / Out of The Money">ITM</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredContracts.length === 0 ? (
                     <tr>
-                      <td colSpan={15} className="empty-table-cell">
-                        No option contracts match the selected filters. Try adjusting your filters above.
+                      <td colSpan={16} className="empty-table-cell">
+                        No option contracts match the selected date or strike filters. Try expanding your date range above.
                       </td>
                     </tr>
                   ) : (
@@ -462,7 +639,7 @@ export default function OptionsExtractorPage() {
                       const isCall = c.optionType === 'CALL'
                       return (
                         <tr
-                          key={c.contractSymbol || `${c.optionType}-${c.strike}`}
+                          key={c.contractSymbol || `${c.optionType}-${c.strike}-${c.expiration}`}
                           className={c.inTheMoney ? 'itm-row' : ''}
                         >
                           <td className="contract-code-cell">{c.contractSymbol}</td>
@@ -471,6 +648,7 @@ export default function OptionsExtractorPage() {
                               {c.optionType}
                             </span>
                           </td>
+                          <td className="exp-date-cell">{c.expiration}</td>
                           <td className="strike-cell">
                             <strong>${c.strike.toFixed(2)}</strong>
                           </td>
@@ -502,6 +680,41 @@ export default function OptionsExtractorPage() {
           </section>
         </>
       )}
+
+      {/* Field Glossary & Header Definitions Section */}
+      <section className="glossary-section glass-panel">
+        <div
+          className="glossary-toggle-header"
+          onClick={() => setShowGlossary(!showGlossary)}
+        >
+          <div className="glossary-title">
+            <BookOpen size={20} className="glossary-icon" />
+            <h2>Field Definitions & Options Glossary Reference</h2>
+          </div>
+          <button className="glossary-collapse-btn">
+            {showGlossary ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+        </div>
+
+        {showGlossary && (
+          <div className="glossary-content">
+            <p className="glossary-intro">
+              Understand all data metrics and Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) exported in your CSV files:
+            </p>
+            <div className="glossary-grid">
+              {HEADER_GLOSSARY.map((item) => (
+                <div key={item.key} className="glossary-card">
+                  <div className="glossary-card-header">
+                    <strong>{item.label}</strong>
+                    <span className="glossary-tag">{item.short}</span>
+                  </div>
+                  <p>{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <AdSlot id="options-inline-mid" />
 
