@@ -56,7 +56,7 @@ export function getSentimentStatus(pcRatio) {
 
 /**
  * Generate realistic 10-year historical Put/Call Ratio time series
- * modeled after historical market regimes (2016-2026).
+ * alongside underlying SPY and QQQ ETF prices.
  */
 export function generateHistoricalPcData(timeframe = '10Y') {
   const years = timeframe === '1Y' ? 1 : timeframe === '3Y' ? 3 : timeframe === '5Y' ? 5 : 10
@@ -67,47 +67,43 @@ export function generateHistoricalPcData(timeframe = '10Y') {
   const baseYear = now.getFullYear() - years
   const baseMonth = now.getMonth()
 
-  // Baseline market regime parameters
   for (let i = 0; i <= totalMonths; i++) {
     const d = new Date(baseYear, baseMonth + i, 1)
     const dateStr = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     const yearNum = d.getFullYear()
     const monthNum = d.getMonth()
 
-    // Regimes simulation (2016-2026)
+    // P/C Ratios Regimes (2016-2026)
     let spyBase = 0.88
     let qqqBase = 0.82
     let nvdaBase = 0.75
     let aaplBase = 0.80
 
-    // COVID Spike early 2020
-    if (yearNum === 2020 && monthNum >= 1 && monthNum <= 3) {
-      spyBase = 1.48
-      qqqBase = 1.42
-      nvdaBase = 1.25
-      aaplBase = 1.30
+    // Price trajectory simulation
+    // SPY: 2016 (~$210) -> 2019 (~$290) -> 2020 COVID ($230 -> $370) -> 2021 ($470) -> 2022 ($360) -> 2024 ($570) -> 2026 ($550)
+    // QQQ: 2016 (~$110) -> 2019 (~$190) -> 2020 COVID ($175 -> $310) -> 2021 ($390) -> 2022 ($260) -> 2024 ($500) -> 2026 ($510)
+    let spyPriceBase = 210
+    let qqqPriceBase = 110
+
+    if (yearNum === 2016) { spyPriceBase = 205 + monthNum * 1.5; qqqPriceBase = 105 + monthNum * 1.2 }
+    else if (yearNum === 2017) { spyPriceBase = 225 + monthNum * 3.5; qqqPriceBase = 120 + monthNum * 3.0 }
+    else if (yearNum === 2018) { spyPriceBase = 270 + Math.sin(monthNum * 0.5) * 15; qqqPriceBase = 160 + Math.sin(monthNum * 0.5) * 12 }
+    else if (yearNum === 2019) { spyPriceBase = 250 + monthNum * 5.0; qqqPriceBase = 155 + monthNum * 4.5 }
+    else if (yearNum === 2020) {
+      if (monthNum <= 2) { spyPriceBase = 320 - monthNum * 40; qqqPriceBase = 220 - monthNum * 25 } // COVID crash
+      else { spyPriceBase = 240 + (monthNum - 2) * 14; qqqPriceBase = 175 + (monthNum - 2) * 15 } // Recovery
+      spyBase = monthNum <= 2 ? 1.48 : 0.85
+      qqqBase = monthNum <= 2 ? 1.42 : 0.78
     }
-    // 2022 Bear Market
+    else if (yearNum === 2021) { spyPriceBase = 370 + monthNum * 8.0; qqqPriceBase = 310 + monthNum * 6.5 }
     else if (yearNum === 2022) {
+      spyPriceBase = 460 - monthNum * 8.5; qqqPriceBase = 390 - monthNum * 10.0 // Bear market
       spyBase = 1.18 + Math.sin(i * 0.5) * 0.15
       qqqBase = 1.22 + Math.sin(i * 0.5) * 0.18
-      nvdaBase = 1.10
-      aaplBase = 1.05
     }
-    // 2023-2024 Tech/AI Bull Market
-    else if (yearNum >= 2023 && yearNum <= 2024) {
-      spyBase = 0.78 + Math.cos(i * 0.3) * 0.08
-      qqqBase = 0.71 + Math.cos(i * 0.3) * 0.09
-      nvdaBase = 0.58 + Math.sin(i * 0.4) * 0.08
-      aaplBase = 0.74
-    }
-    // Current regime (2025-2026)
-    else if (yearNum >= 2025) {
-      spyBase = 0.84 + Math.sin(i * 0.2) * 0.06
-      qqqBase = 0.76 + Math.sin(i * 0.2) * 0.07
-      nvdaBase = 0.64 + Math.cos(i * 0.3) * 0.06
-      aaplBase = 0.79
-    }
+    else if (yearNum === 2023) { spyPriceBase = 380 + monthNum * 7.5; qqqPriceBase = 270 + monthNum * 11.0 }
+    else if (yearNum === 2024) { spyPriceBase = 470 + monthNum * 8.0; qqqPriceBase = 400 + monthNum * 8.5 }
+    else if (yearNum >= 2025) { spyPriceBase = 560 + Math.sin(i * 0.3) * 15; qqqPriceBase = 500 + Math.sin(i * 0.3) * 18 }
 
     const spyNoise = (Math.sin(i * 1.7) * 0.04) + (Math.cos(i * 3.1) * 0.03)
     const qqqNoise = (Math.cos(i * 1.5) * 0.05) + (Math.sin(i * 2.8) * 0.03)
@@ -119,6 +115,9 @@ export function generateHistoricalPcData(timeframe = '10Y') {
     const nvdaRatio = Math.round(Math.max(0.30, nvdaBase + nvdaNoise) * 100) / 100
     const aaplRatio = Math.round(Math.max(0.35, aaplBase + aaplNoise) * 100) / 100
 
+    const spyPrice = Math.round((spyPriceBase + Math.sin(i * 2.1) * 6) * 100) / 100
+    const qqqPrice = Math.round((qqqPriceBase + Math.cos(i * 2.3) * 7) * 100) / 100
+
     points.push({
       date: dateStr,
       isoDate: d.toISOString().split('T')[0],
@@ -126,6 +125,8 @@ export function generateHistoricalPcData(timeframe = '10Y') {
       QQQ: qqqRatio,
       NVDA: nvdaRatio,
       AAPL: aaplRatio,
+      SPY_PRICE: spyPrice,
+      QQQ_PRICE: qqqPrice,
     })
   }
 

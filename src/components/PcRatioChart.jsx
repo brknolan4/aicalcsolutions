@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react'
 import { generateHistoricalPcData } from '../lib/pcRatioEngine'
-import { Calendar, Info } from 'lucide-react'
+import { Calendar, TrendingUp } from 'lucide-react'
 
 const SERIES_CONFIG = {
-  SPY: { label: 'SPY (S&P 500)', color: '#00d4aa', defaultActive: true },
-  QQQ: { label: 'QQQ (Nasdaq 100)', color: '#3b82f6', defaultActive: true },
-  NVDA: { label: 'NVDA (NVIDIA)', color: '#a78bfa', defaultActive: false },
-  AAPL: { label: 'AAPL (Apple)', color: '#f59e0b', defaultActive: false },
+  SPY: { label: 'SPY P/C Ratio', color: '#00d4aa', type: 'ratio', defaultActive: true },
+  QQQ: { label: 'QQQ P/C Ratio', color: '#3b82f6', type: 'ratio', defaultActive: true },
+  NVDA: { label: 'NVDA P/C Ratio', color: '#a78bfa', type: 'ratio', defaultActive: false },
+  AAPL: { label: 'AAPL P/C Ratio', color: '#f59e0b', type: 'ratio', defaultActive: false },
+  SPY_PRICE: { label: 'SPY Price ($)', color: '#10b981', type: 'price', defaultActive: true, isDashed: true },
+  QQQ_PRICE: { label: 'QQQ Price ($)', color: '#60a5fa', type: 'price', defaultActive: false, isDashed: true },
 }
 
 export default function PcRatioChart() {
@@ -16,6 +18,8 @@ export default function PcRatioChart() {
     QQQ: true,
     NVDA: false,
     AAPL: false,
+    SPY_PRICE: true,
+    QQQ_PRICE: false,
   })
   const [hoverIndex, setHoverIndex] = useState(null)
 
@@ -26,19 +30,29 @@ export default function PcRatioChart() {
   }
 
   // Chart dimensions & scaling
-  const width = 850
-  const height = 360
-  const padding = { top: 30, right: 30, bottom: 40, left: 50 }
+  const width = 880
+  const height = 380
+  const padding = { top: 30, right: 65, bottom: 45, left: 55 }
 
   const innerWidth = width - padding.left - padding.right
   const innerHeight = height - padding.top - padding.bottom
 
-  const minY = 0.3
-  const maxY = 1.6
+  // Y-Axis 1: P/C Ratio (0.3 to 1.6)
+  const minYRatio = 0.3
+  const maxYRatio = 1.6
 
-  const getY = (val) => {
-    const clamped = Math.max(minY, Math.min(maxY, val))
-    return padding.top + innerHeight - ((clamped - minY) / (maxY - minY)) * innerHeight
+  // Y-Axis 2: Index Price ($100 to $650)
+  const minYPrice = 90
+  const maxYPrice = 640
+
+  const getRatioY = (val) => {
+    const clamped = Math.max(minYRatio, Math.min(maxYRatio, val))
+    return padding.top + innerHeight - ((clamped - minYRatio) / (maxYRatio - minYRatio)) * innerHeight
+  }
+
+  const getPriceY = (val) => {
+    const clamped = Math.max(minYPrice, Math.min(maxYPrice, val))
+    return padding.top + innerHeight - ((clamped - minYPrice) / (maxYPrice - minYPrice)) * innerHeight
   }
 
   const getX = (idx) => {
@@ -47,16 +61,16 @@ export default function PcRatioChart() {
   }
 
   // Generate SVG path for a series key
-  const getSeriesPath = (key) => {
+  const getSeriesPath = (key, type) => {
     if (!data || data.length === 0) return ''
     return data.reduce((acc, point, idx) => {
       const x = getX(idx)
-      const y = getY(point[key] || 0.85)
+      const val = point[key] || (type === 'price' ? 200 : 0.85)
+      const y = type === 'price' ? getPriceY(val) : getRatioY(val)
       return idx === 0 ? `M ${x} ${y}` : `${acc} L ${x} ${y}`
     }, '')
   }
 
-  // Hover point info
   const hoverPoint = hoverIndex !== null && data[hoverIndex] ? data[hoverIndex] : null
 
   return (
@@ -64,11 +78,11 @@ export default function PcRatioChart() {
       <div className="pc-chart-header">
         <div className="pc-chart-title-group">
           <h3>
-            <Calendar size={18} className="text-teal" />
-            Historical Put-to-Call Ratio Comparison ({timeframe})
+            <TrendingUp size={18} className="text-teal" />
+            Historical Put/Call Ratio vs. SPY / QQQ Index Price Overlay ({timeframe})
           </h3>
           <p className="pc-chart-sub">
-            Track institutional sentiment &amp; hedging cycles back to {timeframe === '10Y' ? '10 Years' : timeframe}.
+            Overlay benchmark ETF market prices (Right Axis) on Put-to-Call sentiment ratios (Left Axis) over a {timeframe === '10Y' ? '10-Year' : timeframe} timeline.
           </p>
         </div>
 
@@ -89,20 +103,22 @@ export default function PcRatioChart() {
 
       {/* Series Toggles Bar */}
       <div className="pc-series-toggles">
-        <span className="pc-toggle-label">Compare Assets:</span>
+        <span className="pc-toggle-label">Series Overlay:</span>
         {Object.entries(SERIES_CONFIG).map(([key, cfg]) => (
           <button
             key={key}
             className={`pc-series-chip ${activeSeries[key] ? 'active' : ''}`}
             style={{
-              '--series-color': cfg.color,
               borderColor: activeSeries[key] ? cfg.color : 'var(--op-border)',
             }}
             onClick={() => toggleSeries(key)}
           >
             <span
               className="pc-chip-dot"
-              style={{ background: activeSeries[key] ? cfg.color : 'var(--op-muted)' }}
+              style={{
+                background: activeSeries[key] ? cfg.color : 'var(--op-muted)',
+                borderRadius: cfg.isDashed ? '2px' : '50%',
+              }}
             />
             {cfg.label}
           </button>
@@ -129,41 +145,41 @@ export default function PcRatioChart() {
           {/* Extreme Greed Zone (< 0.60) */}
           <rect
             x={padding.left}
-            y={getY(0.60)}
+            y={getRatioY(0.60)}
             width={innerWidth}
-            height={getY(minY) - getY(0.60)}
+            height={getRatioY(minYRatio) - getRatioY(0.60)}
             fill="rgba(16, 185, 129, 0.05)"
           />
           {/* Bullish Zone (0.60 - 0.85) */}
           <rect
             x={padding.left}
-            y={getY(0.85)}
+            y={getRatioY(0.85)}
             width={innerWidth}
-            height={getY(0.60) - getY(0.85)}
+            height={getRatioY(0.60) - getRatioY(0.85)}
             fill="rgba(0, 212, 170, 0.04)"
           />
           {/* Neutral Zone (0.85 - 1.15) */}
           <rect
             x={padding.left}
-            y={getY(1.15)}
+            y={getRatioY(1.15)}
             width={innerWidth}
-            height={getY(0.85) - getY(1.15)}
+            height={getRatioY(0.85) - getRatioY(1.15)}
             fill="rgba(59, 130, 246, 0.03)"
           />
           {/* Bearish / Extreme Fear Zone (> 1.15) */}
           <rect
             x={padding.left}
-            y={getY(maxY)}
+            y={getRatioY(maxYRatio)}
             width={innerWidth}
-            height={getY(1.15) - getY(maxY)}
+            height={getRatioY(1.15) - getRatioY(maxYRatio)}
             fill="rgba(239, 68, 68, 0.05)"
           />
 
-          {/* Grid lines */}
+          {/* Left Y Axis Grid Lines (P/C Ratios) */}
           {[0.4, 0.6, 0.85, 1.0, 1.15, 1.4].map((val) => {
-            const y = getY(val)
+            const y = getRatioY(val)
             return (
-              <g key={val}>
+              <g key={`ratio-${val}`}>
                 <line
                   x1={padding.left}
                   y1={y}
@@ -185,7 +201,26 @@ export default function PcRatioChart() {
             )
           })}
 
-          {/* X Axis Labels */}
+          {/* Right Y Axis Grid Labels (Index Prices) */}
+          {[100, 200, 300, 400, 500, 600].map((val) => {
+            const y = getPriceY(val)
+            return (
+              <g key={`price-${val}`}>
+                <text
+                  x={padding.left + innerWidth + 8}
+                  y={y + 4}
+                  fill="#10b981"
+                  fontSize="10"
+                  fontWeight="600"
+                  textAnchor="start"
+                >
+                  ${val}
+                </text>
+              </g>
+            )
+          })}
+
+          {/* X Axis Date Labels */}
           {data.map((point, idx) => {
             const step = Math.ceil(data.length / 8)
             if (idx % step !== 0 && idx !== data.length - 1) return null
@@ -204,24 +239,26 @@ export default function PcRatioChart() {
             )
           })}
 
-          {/* Lines for each active series */}
+          {/* Render Lines for Active Series */}
           {Object.entries(SERIES_CONFIG).map(([key, cfg]) => {
             if (!activeSeries[key]) return null
-            const d = getSeriesPath(key)
+            const d = getSeriesPath(key, cfg.type)
             return (
               <path
                 key={key}
                 d={d}
                 fill="none"
                 stroke={cfg.color}
-                strokeWidth="2.5"
+                strokeWidth={cfg.type === 'price' ? '2.2' : '2.5'}
+                strokeDasharray={cfg.isDashed ? '6 4' : 'none'}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                opacity={cfg.type === 'price' ? 0.9 : 1.0}
               />
             )
           })}
 
-          {/* Hover Crosshair & Dots */}
+          {/* Hover Crosshair & Data Points */}
           {hoverIndex !== null && hoverPoint && (
             <g>
               <line
@@ -236,7 +273,9 @@ export default function PcRatioChart() {
               {Object.entries(SERIES_CONFIG).map(([key, cfg]) => {
                 if (!activeSeries[key]) return null
                 const cx = getX(hoverIndex)
-                const cy = getY(hoverPoint[key] || 0.85)
+                const val = hoverPoint[key]
+                if (val === undefined) return null
+                const cy = cfg.type === 'price' ? getPriceY(val) : getRatioY(val)
                 return (
                   <circle
                     key={key}
@@ -258,7 +297,7 @@ export default function PcRatioChart() {
           <div
             className="pc-chart-tooltip"
             style={{
-              left: `${Math.min(72, Math.max(12, (getX(hoverIndex) / width) * 100))}%`,
+              left: `${Math.min(70, Math.max(15, (getX(hoverIndex) / width) * 100))}%`,
             }}
           >
             <div className="pc-tooltip-date">{hoverPoint.date}</div>
@@ -266,12 +305,15 @@ export default function PcRatioChart() {
               {Object.entries(SERIES_CONFIG).map(([key, cfg]) => {
                 if (!activeSeries[key]) return null
                 const val = hoverPoint[key]
+                if (val === undefined) return null
                 return (
                   <div key={key} className="pc-tooltip-row">
                     <span className="pc-tooltip-key" style={{ color: cfg.color }}>
-                      ● {key}:
+                      ● {key.replace('_PRICE', '')}:
                     </span>
-                    <span className="pc-tooltip-val">{val ? val.toFixed(2) : 'N/A'}</span>
+                    <span className="pc-tooltip-val">
+                      {cfg.type === 'price' ? `$${val.toFixed(2)}` : val.toFixed(2)}
+                    </span>
                   </div>
                 )
               })}
@@ -280,19 +322,15 @@ export default function PcRatioChart() {
         )}
       </div>
 
-      {/* Legend & Guide */}
+      {/* Legend & Axis Guide */}
       <div className="pc-chart-footer">
+        <div className="pc-zone-indicator text-teal">
+          <span>Left Axis:</span>
+          <span className="pc-zone-badge bg-blue-dim">P/C Sentiment Ratios</span>
+        </div>
         <div className="pc-zone-indicator text-green">
-          <span className="pc-zone-badge bg-green-dim">P/C &lt; 0.70</span>
-          <span>Bullish / Heavy Call Demand</span>
-        </div>
-        <div className="pc-zone-indicator text-blue">
-          <span className="pc-zone-badge bg-blue-dim">0.70 - 1.00</span>
-          <span>Balanced / Neutral</span>
-        </div>
-        <div className="pc-zone-indicator text-red">
-          <span className="pc-zone-badge bg-red-dim">P/C &gt; 1.00</span>
-          <span>Bearish / High Hedging</span>
+          <span>Right Axis:</span>
+          <span className="pc-zone-badge bg-green-dim">Index ETF Prices ($)</span>
         </div>
       </div>
     </div>
