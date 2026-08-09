@@ -1,24 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart2,
-  BookOpen,
-  Calendar,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Download,
-  FileSpreadsheet,
-  HelpCircle,
-  Info,
-  Maximize2,
-  RefreshCw,
-  RotateCcw,
-  Search,
-  Sliders,
-  TrendingUp,
+  AlertCircle, ArrowDownRight, ArrowUpRight, BarChart2, BookOpen,
+  Calendar, Check, ChevronDown, ChevronUp, Copy, Download,
+  FileSpreadsheet, HelpCircle, Info, Maximize2, RefreshCw,
+  RotateCcw, Search, Sliders, TrendingUp, Zap,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import AdSlot from '../components/AdSlot'
@@ -26,222 +11,119 @@ import Seo from '../components/Seo'
 import { downloadOptionsCsv, generateOptionsCsv } from '../lib/optionsCsvExporter'
 import { fetchOptionsData } from '../lib/optionsEngine'
 import { absoluteUrl, faqSchema, webAppSchema } from '../lib/seo'
+import '../options.css'
 
 const POPULAR_TICKERS = ['AAPL', 'SPY', 'TSLA', 'NVDA', 'QQQ', 'MSFT', 'AMZN', 'AMD', 'META', 'GOOGL']
 
-// Column width defaults for resizable grid
 const DEFAULT_COL_WIDTHS = {
-  contractSymbol: 185,
-  optionType: 80,
-  expiration: 105,
-  strike: 95,
-  lastPrice: 85,
-  bid: 80,
-  ask: 80,
-  change: 85,
-  volume: 90,
-  openInterest: 95,
-  iv: 85,
-  delta: 85,
-  gamma: 85,
-  theta: 85,
-  vega: 85,
-  itm: 70,
+  contractSymbol: 185, optionType: 76, expiration: 100,
+  strike: 90, lastPrice: 82, bid: 78, ask: 78, change: 82,
+  volume: 88, openInterest: 92, iv: 80, delta: 84,
+  gamma: 84, theta: 84, vega: 82, itm: 66,
 }
 
-// Tooltip helper component
-function VariableTooltip({ text }) {
-  const [visible, setVisible] = useState(false)
+const GLOSSARY_ITEMS = [
+  { key: 'strike', title: 'Strike Price', tag: 'Contract Basics', desc: 'The agreed price at which you can buy (Call) or sell (Put) 100 shares. Profit depends on the stock moving past this price before expiration.' },
+  { key: 'lastPrice', title: 'Last Price (Premium)', tag: 'Pricing', desc: 'Most recent price per share paid. Multiply by 100 to get total contract cost — e.g. $4.50 last price = $450 per contract.' },
+  { key: 'bidAsk', title: 'Bid / Ask Spread', tag: 'Liquidity', desc: 'Bid = what buyers offer; Ask = what sellers want. A tight spread (e.g. $0.02) means high liquidity. A wide spread means it is harder to exit the position quickly.' },
+  { key: 'volume', title: 'Volume', tag: 'Activity', desc: 'Number of contracts traded today. High volume signals strong interest and makes it easier to enter or exit a position without moving the price.' },
+  { key: 'openInterest', title: 'Open Interest (OI)', tag: 'Activity', desc: 'Total number of open contracts not yet closed or exercised. Rising OI alongside rising volume indicates new money flowing in.' },
+  { key: 'iv', title: 'Implied Volatility (IV)', tag: 'Volatility', desc: "Market's expectation of how much the stock will move in the future (annualized %). Higher IV = more expensive option premiums." },
+  { key: 'delta', title: 'Delta (Δ)', tag: 'Greeks', desc: 'How much the option price moves per $1 move in the stock. Calls range 0 to 1; Puts range -1 to 0. Also roughly equals the probability of expiring In-The-Money.' },
+  { key: 'gamma', title: 'Gamma (Γ)', tag: 'Greeks', desc: 'The rate at which Delta changes for every $1 move in the stock. High Gamma means your Delta (price sensitivity) changes rapidly as the stock moves.' },
+  { key: 'theta', title: 'Theta (Θ)', tag: 'Greeks', desc: 'Daily time decay — the dollar amount the option loses each calendar day, all else equal. Always negative for option buyers.' },
+  { key: 'vega', title: 'Vega (ν)', tag: 'Greeks', desc: 'Change in option price for every 1% change in Implied Volatility. Long options gain value when volatility rises.' },
+  { key: 'itm', title: 'ITM / OTM Status', tag: 'Moneyness', desc: 'In-The-Money (ITM) = the option has intrinsic value (Call: stock above strike; Put: stock below strike). Out-of-The-Money (OTM) = time value only.' },
+  { key: 'maxPain', title: 'Max Pain', tag: 'Analysis', desc: 'The strike price where the most option contracts expire worthless, causing maximum loss for option buyers. Acts as a price magnet near expiration.' },
+]
+
+const COLS = [
+  { key: 'contractSymbol', label: 'Contract Symbol' },
+  { key: 'optionType',     label: 'Type' },
+  { key: 'expiration',     label: 'Exp Date' },
+  { key: 'strike',         label: 'Strike' },
+  { key: 'lastPrice',      label: 'Last' },
+  { key: 'bid',            label: 'Bid' },
+  { key: 'ask',            label: 'Ask' },
+  { key: 'change',         label: 'Change' },
+  { key: 'volume',         label: 'Volume' },
+  { key: 'openInterest',   label: 'Open Int' },
+  { key: 'iv',             label: 'IV %' },
+  { key: 'delta',          label: 'Delta Δ' },
+  { key: 'gamma',          label: 'Gamma Γ' },
+  { key: 'theta',          label: 'Theta Θ' },
+  { key: 'vega',           label: 'Vega ν' },
+  { key: 'itm',            label: 'ITM' },
+]
+
+function HelpTooltip({ text }) {
+  const [show, setShow] = useState(false)
   return (
     <span
-      className="variable-tooltip-wrapper"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-      onClick={() => setVisible(!visible)}
+      className="op-help-wrap"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      onClick={() => setShow(v => !v)}
       role="button"
       tabIndex={0}
-      aria-label="Field explanation"
+      aria-label="More info"
     >
-      <HelpCircle size={14} className="question-help-icon" />
-      {visible && <span className="tooltip-bubble">{text}</span>}
+      <HelpCircle size={13} className="op-help-icon" />
+      {show && <span className="op-tooltip">{text}</span>}
     </span>
   )
 }
 
-// Detailed header definitions for glossary
-const HEADER_GLOSSARY = [
-  {
-    key: 'contractSymbol',
-    label: 'Contract Symbol',
-    short: 'OCC Ticker',
-    description: 'The standardized OCC (Options Clearing Corporation) identifier for the contract (e.g. AAPL260821C00190000).',
-  },
-  {
-    key: 'optionType',
-    label: 'Option Type',
-    short: 'CALL / PUT',
-    description: 'CALL gives you the right to BUY 100 shares at the strike. PUT gives you the right to SELL 100 shares at the strike.',
-  },
-  {
-    key: 'strike',
-    label: 'Strike Price',
-    short: 'Execution Price',
-    description: 'The predetermined price at which the underlying stock can be bought (Call) or sold (Put) upon exercise.',
-  },
-  {
-    key: 'lastPrice',
-    label: 'Last Price',
-    short: 'Premium',
-    description: 'The most recent price per share paid for the contract. Multiply by 100 to get total contract price.',
-  },
-  {
-    key: 'bidAsk',
-    label: 'Bid / Ask',
-    short: 'Market Spread',
-    description: 'Bid is the highest price buyers offer; Ask is the lowest price sellers accept. Narrow spreads mean higher liquidity.',
-  },
-  {
-    key: 'change',
-    label: 'Change ($ / %)',
-    short: 'Daily Price Shift',
-    description: 'Dollar and percentage change in option contract price compared to the previous trading session close.',
-  },
-  {
-    key: 'volume',
-    label: 'Volume',
-    short: 'Daily Contracts Traded',
-    description: 'Total number of option contracts bought and sold during the current trading session.',
-  },
-  {
-    key: 'openInterest',
-    label: 'Open Interest (OI)',
-    short: 'Active Contracts',
-    description: 'Total number of active outstanding contracts that have been opened but not yet settled or closed.',
-  },
-  {
-    key: 'iv',
-    label: 'Implied Volatility (IV)',
-    short: 'Expected Volatility %',
-    description: 'The annualized market expectation of stock price volatility. Higher IV means higher option premiums.',
-  },
-  {
-    key: 'delta',
-    label: 'Delta (Δ)',
-    short: 'Price Sensitivity',
-    description: 'Expected change in option price per $1 move in the stock ($0 to 1.0 for Calls, -1.0 to 0 for Puts). Also estimates probability of expiring ITM.',
-  },
-  {
-    key: 'gamma',
-    label: 'Gamma (Γ)',
-    short: 'Delta Acceleration',
-    description: 'Rate of change in Delta per $1 move in stock price. Measures how fast Delta changes as stock moves.',
-  },
-  {
-    key: 'theta',
-    label: 'Theta (Θ)',
-    short: 'Daily Time Decay',
-    description: 'Dollar amount the option premium loses each calendar day due to time decay (always negative for long options).',
-  },
-  {
-    key: 'vega',
-    label: 'Vega (ν)',
-    short: 'Volatility Sensitivity',
-    description: 'Expected change in option premium per 1% change in Implied Volatility.',
-  },
-  {
-    key: 'rho',
-    label: 'Rho (ρ)',
-    short: 'Interest Rate Impact',
-    description: 'Expected change in option price per 1% change in risk-free interest rates.',
-  },
-  {
-    key: 'itm',
-    label: 'ITM / OTM',
-    short: 'Moneyness Status',
-    description: 'In-The-Money (ITM) has intrinsic value (e.g. Call strike < Stock price). Out-of-The-Money (OTM) has time value only.',
-  },
-]
-
 export default function OptionsExtractorPage() {
   const [symbol, setSymbol] = useState('AAPL')
   const [inputSymbol, setInputSymbol] = useState('AAPL')
-
-  // Date selection state
-  const [dateMode, setDateMode] = useState('SINGLE') // SINGLE or RANGE
+  const [dateMode, setDateMode] = useState('SINGLE')
   const [selectedDate, setSelectedDate] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
   const [copied, setCopied] = useState(false)
   const [showGlossary, setShowGlossary] = useState(true)
-
-  // Resizable columns state
   const [colWidths, setColWidths] = useState(DEFAULT_COL_WIDTHS)
-  const [isExpandedBox, setIsExpandedBox] = useState(false)
-
-  // Filters
-  const [typeFilter, setTypeFilter] = useState('ALL') // ALL, CALLS, PUTS
-  const [moneynessFilter, setMoneynessFilter] = useState('ALL') // ALL, ITM, OTM, NEAR
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [typeFilter, setTypeFilter] = useState('ALL')
+  const [moneynessFilter, setMoneynessFilter] = useState('ALL')
   const [strikeSearch, setStrikeSearch] = useState('')
-  const [viewTab, setViewTab] = useState('COMBINED')
 
-  const handleMouseDownResizer = (e, colKey) => {
+  const handleColResize = (e, colKey) => {
     e.preventDefault()
     const startX = e.clientX
-    const startWidth = colWidths[colKey] || 90
-
-    const onMouseMove = (moveEvent) => {
-      const diff = moveEvent.clientX - startX
-      const newWidth = Math.max(50, startWidth + diff)
-      setColWidths((prev) => ({ ...prev, [colKey]: newWidth }))
-    }
-
-    const onMouseUp = () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
+    const startW = colWidths[colKey] || 90
+    const move = ev => setColWidths(prev => ({ ...prev, [colKey]: Math.max(50, startW + (ev.clientX - startX)) }))
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up) }
+    window.addEventListener('mousemove', move)
+    window.addEventListener('mouseup', up)
   }
 
-  const resetColumnWidths = () => {
-    setColWidths(DEFAULT_COL_WIDTHS)
-  }
-
-  const fetchOptions = async (targetSymbol, expDate = '') => {
-    setLoading(true)
-    setError(null)
+  const fetchOptions = async (sym, expDate = '') => {
+    setLoading(true); setError(null)
     try {
-      const json = await fetchOptionsData(targetSymbol, expDate)
+      const json = await fetchOptionsData(sym, expDate)
       setData(json)
-
       if (json.selectedExpiration?.dateStr && !selectedDate) {
         setSelectedDate(json.selectedExpiration.dateStr)
         setStartDate(json.selectedExpiration.dateStr)
       }
-      if (json.expirationDates && json.expirationDates.length > 0) {
-        const lastIndex = Math.min(3, json.expirationDates.length - 1)
-        if (!endDate) {
-          setEndDate(json.expirationDates[lastIndex].dateStr)
-        }
+      if (json.expirationDates?.length > 0 && !endDate) {
+        setEndDate(json.expirationDates[Math.min(3, json.expirationDates.length - 1)].dateStr)
       }
     } catch (err) {
-      console.error('Error fetching options:', err)
       setError(err.message || 'Unable to connect to options data service.')
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchOptions('AAPL')
-  }, [])
+  useEffect(() => { fetchOptions('AAPL') }, [])
 
-  const handleSymbolSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault()
     const clean = inputSymbol.trim().toUpperCase()
     if (!clean) return
@@ -249,600 +131,397 @@ export default function OptionsExtractorPage() {
     fetchOptions(clean, dateMode === 'SINGLE' ? selectedDate : startDate)
   }
 
-  const handlePresetClick = (ticker) => {
-    setInputSymbol(ticker)
-    setSymbol(ticker)
+  const handlePreset = ticker => {
+    setInputSymbol(ticker); setSymbol(ticker)
     fetchOptions(ticker, dateMode === 'SINGLE' ? selectedDate : startDate)
   }
 
-  const handleSingleDateChange = (e) => {
-    const newDate = e.target.value
-    setSelectedDate(newDate)
-    fetchOptions(symbol, newDate)
-  }
+  const handleSingleDate = e => { setSelectedDate(e.target.value); fetchOptions(symbol, e.target.value) }
 
-  // Filter logic for contracts table & CSV export
   const filteredContracts = useMemo(() => {
     if (!data) return []
     const price = data.underlyingPrice || 0
-    let pool = []
+    let pool = typeFilter === 'CALLS' ? (data.calls || [])
+             : typeFilter === 'PUTS'  ? (data.puts || [])
+             : [...(data.calls || []), ...(data.puts || [])]
 
-    if (typeFilter === 'CALLS' || viewTab === 'CALLS') {
-      pool = data.calls || []
-    } else if (typeFilter === 'PUTS' || viewTab === 'PUTS') {
-      pool = data.puts || []
-    } else {
-      pool = [...(data.calls || []), ...(data.puts || [])]
-    }
-
-    return pool.filter((c) => {
-      // Date Range Filter
+    return pool.filter(c => {
       if (dateMode === 'RANGE' && (startDate || endDate)) {
-        const contractDate = c.expiration
-        if (startDate && contractDate < startDate) return false
-        if (endDate && contractDate > endDate) return false
+        if (startDate && c.expiration < startDate) return false
+        if (endDate && c.expiration > endDate) return false
       }
-
-      // Moneyness Filter
       if (moneynessFilter === 'ITM' && !c.inTheMoney) return false
       if (moneynessFilter === 'OTM' && c.inTheMoney) return false
-      if (moneynessFilter === 'NEAR') {
-        const pctDiff = Math.abs(c.strike - price) / price
-        if (pctDiff > 0.08) return false
-      }
-
-      // Strike / Contract Symbol Search
+      if (moneynessFilter === 'NEAR' && Math.abs(c.strike - price) / price > 0.08) return false
       if (strikeSearch.trim()) {
         const q = strikeSearch.trim().toLowerCase()
-        const strikeStr = String(c.strike)
-        const contractStr = (c.contractSymbol || '').toLowerCase()
-        if (!strikeStr.includes(q) && !contractStr.includes(q)) {
-          return false
-        }
+        if (!String(c.strike).includes(q) && !(c.contractSymbol || '').toLowerCase().includes(q)) return false
       }
-
       return true
     }).sort((a, b) => a.strike - b.strike || a.optionType.localeCompare(b.optionType))
-  }, [data, typeFilter, moneynessFilter, strikeSearch, viewTab, dateMode, startDate, endDate])
+  }, [data, typeFilter, moneynessFilter, strikeSearch, dateMode, startDate, endDate])
 
-  const handleDownloadCsv = (exportType = 'ALL') => {
+  const handleDownload = (type = 'ALL') => {
     if (!data) return
-    let exportList = filteredContracts
-    if (exportType === 'CALLS') exportList = filteredContracts.filter(c => c.optionType === 'CALL')
-    if (exportType === 'PUTS') exportList = filteredContracts.filter(c => c.optionType === 'PUT')
-    downloadOptionsCsv(data, exportList, exportType)
+    let list = type === 'CALLS' ? filteredContracts.filter(c => c.optionType === 'CALL')
+             : type === 'PUTS'  ? filteredContracts.filter(c => c.optionType === 'PUT')
+             : filteredContracts
+    downloadOptionsCsv(data, list, type)
   }
 
-  const handleCopyCsv = () => {
+  const handleCopy = () => {
     if (!data) return
-    const csvString = generateOptionsCsv(data, filteredContracts, typeFilter)
-    navigator.clipboard.writeText(csvString).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
+    navigator.clipboard.writeText(generateOptionsCsv(data, filteredContracts, typeFilter)).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2500)
     })
   }
 
   const seoSchema = {
     '@context': 'https://schema.org',
     '@graph': [
-      webAppSchema({
-        name: 'Options Data Extractor & CSV Downloader',
-        url: absoluteUrl('/options-extractor'),
-        description: 'Extract stock options chain data and Option Greeks for any symbol into CSV for Microsoft Excel and Google Sheets.',
-      }),
+      webAppSchema({ name: 'Options Data Extractor & CSV Downloader', url: absoluteUrl('/options-extractor'), description: 'Extract stock options chain data and Option Greeks into CSV for Excel and Google Sheets.' }),
       faqSchema([
-        {
-          question: 'How do I download stock options data and Greeks into Excel?',
-          answer: 'Enter a ticker symbol like AAPL or SPY, select an expiration date or date range using the calendar control, and click Download CSV.',
-        },
-        {
-          question: 'Are Option Greeks included in the CSV extraction?',
-          answer: 'Yes, full Option Greeks (Delta, Gamma, Theta, Vega, Rho) are automatically calculated and included in every CSV download.',
-        },
+        { question: 'How do I download stock options data into Excel?', answer: 'Enter a ticker symbol, choose an expiration date, then click Download CSV.' },
+        { question: 'Are Greeks included in the CSV?', answer: 'Yes — Delta, Gamma, Theta, Vega, and Rho are automatically calculated and included.' },
       ]),
     ],
   }
 
   return (
-    <div className="app-wrapper options-page-container">
+    <div>
       <Seo
         title="Stock Options Data Extractor: Download CSV with Greeks for Excel & Google Sheets"
-        description="Free stock options data extractor. Download Calls, Puts, strike prices, volume, open interest, IV, Delta, Gamma, Theta, Vega, and Rho into CSV for Excel & Google Sheets."
+        description="Free stock options data extractor. Download Calls, Puts, strike prices, volume, OI, IV, Delta, Gamma, Theta, Vega, Rho into CSV for Excel & Google Sheets."
         canonical={absoluteUrl('/options-extractor')}
         schema={seoSchema}
       />
 
-      {/* Hero Header */}
-      <section className="landing-hero options-hero">
-        <span className="hero-eyebrow">
-          <FileSpreadsheet size={14} /> Free Options Data Extractor · Resizable Columns &amp; CSV Export
-        </span>
-        <h1 className="hero-headline">
-          Stock Options <em>Data Extractor</em> & CSV Downloader
-        </h1>
-        <p className="hero-sub">
-          Extract complete options chains for any US stock symbol into clean CSV files formatted for Microsoft Excel & Google Sheets. Features resizable data grid, calendar date range pickers, and full Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$).
+      {/* HERO */}
+      <section className="op-hero">
+        <div className="op-eyebrow"><Zap size={12} /> Free Options Chain Extractor · Full Greeks · CSV Export</div>
+        <h1 className="op-hero-title">Stock Options <em>Data Extractor</em></h1>
+        <p className="op-hero-sub">
+          Pull complete options chains for any US stock or ETF into a clean CSV file ready for Excel or Google Sheets —
+          including Delta, Gamma, Theta, Vega &amp; Rho.
         </p>
       </section>
 
-      {/* Input Variable Control Panel */}
-      <section className="options-control-section glass-panel">
-        <div className="section-step-header">
-          <span className="step-number">1</span>
-          <h2>Set Input Variables &amp; Parameters</h2>
-          <Link to="/field-guide" className="field-guide-link">
-            <BookOpen size={14} /> View Field Dictionary
-          </Link>
+      {/* INPUT PANEL */}
+      <section className="op-input-panel op-panel">
+        <div className="op-section-label">
+          <span className="op-section-badge">1</span>
+          Enter Stock Symbol
         </div>
-
-        {/* Input Variable: Ticker Symbol */}
-        <form onSubmit={handleSymbolSubmit} className="options-search-form">
-          <div className="variable-field-row">
-            <div className="variable-label-group">
-              <label htmlFor="ticker-input">Stock Symbol / Ticker:</label>
-              <VariableTooltip text="Enter any US equity or ETF ticker symbol (e.g. AAPL for Apple Inc., SPY for S&P 500 ETF, TSLA for Tesla Inc.)." />
-            </div>
-            <div className="search-input-group">
-              <Search className="search-icon" size={18} />
+        <form onSubmit={handleSubmit}>
+          <div className="op-ticker-row">
+            <div className="op-ticker-input-wrap">
+              <Search size={18} />
               <input
                 id="ticker-input"
                 type="text"
+                className="op-ticker-input"
                 value={inputSymbol}
-                onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
-                placeholder="Enter ticker (e.g. AAPL, SPY, TSLA, NVDA)"
-                className="symbol-input"
+                onChange={e => setInputSymbol(e.target.value.toUpperCase())}
+                placeholder="e.g. AAPL, SPY, TSLA, NVDA"
                 maxLength={10}
+                aria-label="Stock ticker symbol"
               />
-              <button type="submit" className="cta-btn search-submit-btn" disabled={loading}>
-                {loading ? <RefreshCw className="spin-icon" size={16} /> : 'Extract Data'}
-              </button>
             </div>
+            <button type="submit" className="op-extract-btn" disabled={loading}>
+              {loading
+                ? <><RefreshCw size={16} className="spin" /> Extracting&hellip;</>
+                : <><Download size={16} /> Extract Options</>}
+            </button>
           </div>
         </form>
 
-        {/* Popular Presets */}
-        <div className="preset-row">
-          <span className="preset-label">Quick Symbol Presets:</span>
-          <div className="preset-badges">
-            {POPULAR_TICKERS.map((t) => (
-              <button
-                key={t}
-                onClick={() => handlePresetClick(t)}
-                className={`preset-btn ${symbol === t ? 'active' : ''}`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        <div className="op-presets-row">
+          <span className="op-presets-label">Quick picks:</span>
+          {POPULAR_TICKERS.map(t => (
+            <button key={t} className={`op-preset-chip${symbol === t ? ' active' : ''}`}
+              onClick={() => handlePreset(t)}>{t}</button>
+          ))}
         </div>
 
-        {/* Date Selection Box */}
-        <div className="date-selection-box">
-          <div className="date-mode-toggle">
-            <div className="variable-label-group">
-              <span className="control-label"><Calendar size={15} /> Expiration Selection Mode:</span>
-              <VariableTooltip text="Select a single Friday expiration date OR use the calendar pickers to extract an entire date range of options." />
-            </div>
-            <div className="pill-toggle">
-              <button
-                onClick={() => setDateMode('SINGLE')}
-                className={`pill-btn ${dateMode === 'SINGLE' ? 'active' : ''}`}
-              >
-                Specific Expiration Date
-              </button>
-              <button
-                onClick={() => setDateMode('RANGE')}
-                className={`pill-btn ${dateMode === 'RANGE' ? 'active' : ''}`}
-              >
-                Date Range (Calendar)
-              </button>
-            </div>
+        <div className="op-divider" />
+
+        <div className="op-section-label">
+          <span className="op-section-badge">2</span>
+          <Calendar size={13} />
+          Select Expiration Date
+          <HelpTooltip text="Options expire on Fridays. Choose one specific date or a date range to see multiple expirations at once." />
+        </div>
+
+        <div className="op-date-box">
+          <div className="op-date-mode-tabs">
+            <button className={`op-date-tab${dateMode === 'SINGLE' ? ' active' : ''}`}
+              onClick={() => setDateMode('SINGLE')}>One Date</button>
+            <button className={`op-date-tab${dateMode === 'RANGE' ? ' active' : ''}`}
+              onClick={() => setDateMode('RANGE')}>Date Range</button>
           </div>
 
-          {dateMode === 'SINGLE' ? (
-            <div className="date-picker-row">
-              <div className="picker-item">
-                <div className="variable-label-group">
-                  <label htmlFor="single-date-select">Select Available Friday Expiration:</label>
-                  <VariableTooltip text="Options contracts typically expire on Friday afternoons. Select any upcoming expiration date." />
-                </div>
-                {data && data.expirationDates && data.expirationDates.length > 0 ? (
-                  <select
-                    id="single-date-select"
-                    value={selectedDate}
-                    onChange={handleSingleDateChange}
-                    className="styled-date-input"
-                    disabled={loading}
-                  >
-                    {data.expirationDates.map((exp) => (
+          <div className="op-date-fields">
+            {dateMode === 'SINGLE' ? (
+              <div className="op-date-field">
+                <label className="op-field-label" htmlFor="single-date">
+                  Expiration Date
+                  <HelpTooltip text="Select any available Friday expiration date from the dropdown." />
+                </label>
+                {data?.expirationDates?.length > 0 ? (
+                  <select id="single-date" className="op-date-select" value={selectedDate}
+                    onChange={handleSingleDate} disabled={loading}>
+                    {data.expirationDates.map(exp => (
                       <option key={exp.dateStr} value={exp.dateStr}>
                         {exp.formatted} ({exp.dateStr})
                       </option>
                     ))}
                   </select>
                 ) : (
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={handleSingleDateChange}
-                    className="styled-date-input"
-                  />
+                  <input type="date" id="single-date" className="op-date-input"
+                    value={selectedDate} onChange={handleSingleDate} />
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="date-picker-row date-range-inputs">
-              <div className="picker-item">
-                <div className="variable-label-group">
-                  <label htmlFor="start-date-input">From Date (Calendar):</label>
-                  <VariableTooltip text="Start date for filtering expiration dates in the calendar control." />
+            ) : (
+              <>
+                <div className="op-date-field">
+                  <label className="op-field-label" htmlFor="start-date">
+                    From Date
+                    <HelpTooltip text="Start of your expiration date range. Contracts expiring from this date forward will be included." />
+                  </label>
+                  <input type="date" id="start-date" className="op-date-input"
+                    value={startDate} onChange={e => setStartDate(e.target.value)} />
                 </div>
-                <input
-                  id="start-date-input"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="styled-date-input"
-                />
-              </div>
-
-              <div className="picker-item">
-                <div className="variable-label-group">
-                  <label htmlFor="end-date-input">To Date (Calendar):</label>
-                  <VariableTooltip text="End date for filtering expiration dates in the calendar control." />
+                <div className="op-date-field">
+                  <label className="op-field-label" htmlFor="end-date">
+                    To Date
+                    <HelpTooltip text="End of your expiration date range." />
+                  </label>
+                  <input type="date" id="end-date" className="op-date-input"
+                    value={endDate} onChange={e => setEndDate(e.target.value)} />
                 </div>
-                <input
-                  id="end-date-input"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="styled-date-input"
-                />
-              </div>
-
-              <div className="range-apply-box">
-                <button
-                  onClick={() => fetchOptions(symbol, startDate)}
-                  className="secondary-btn apply-range-btn"
-                  disabled={loading}
-                >
-                  <RefreshCw size={14} className={loading ? 'spin-icon' : ''} /> Filter Range
+                <button className="op-apply-btn" onClick={() => fetchOptions(symbol, startDate)} disabled={loading}>
+                  <RefreshCw size={14} className={loading ? 'spin' : ''} /> Apply Range
                 </button>
-              </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Error Banner */}
+      {/* ERRORS */}
       {error && (
-        <div className="error-banner">
-          <Info size={18} />
-          <span>{error}</span>
-          <button onClick={() => fetchOptions(symbol)} className="error-retry-btn">
-            Retry
-          </button>
+        <div className="op-error-box">
+          <AlertCircle size={16} color="#ef4444" />
+          <span className="op-error-text">{error}</span>
+          <button className="op-error-retry" onClick={() => fetchOptions(symbol)}>Retry</button>
         </div>
       )}
 
-      {/* Loading Skeleton State */}
+      {/* LOADING */}
       {loading && !data && (
-        <div className="loading-container glass-panel">
-          <RefreshCw className="spin-icon large-spinner" size={36} />
-          <p>Extracting options chain data &amp; computing Greeks for <strong>{symbol}</strong>...</p>
+        <div className="op-loading-box op-panel">
+          <div className="op-spinner" />
+          <p className="op-loading-text">Extracting options chain for <strong>{symbol}</strong>&hellip;</p>
         </div>
       )}
 
-      {/* Main Options Data View */}
+      {/* MOCK DATA BANNER */}
+      {data?.isMock && (
+        <div className="op-mock-banner">
+          <Info size={15} />
+          Showing sample data &mdash; live Yahoo Finance data loads in production (aicalcsolutions.com).
+        </div>
+      )}
+
+      {/* DATA SECTION */}
       {data && (
         <>
-          {/* Key Metrics Summary Cards */}
-          <section className="options-kpi-grid">
-            <div className="kpi-card glass-panel">
-              <span className="kpi-label">Stock Price ({data.symbol})</span>
-              <div className="kpi-value-row">
-                <span className="kpi-main-val">${data.underlyingPrice.toFixed(2)}</span>
-                <span className={`kpi-change ${data.change >= 0 ? 'pos' : 'neg'}`}>
-                  {data.change >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                  {data.change >= 0 ? '+' : ''}{data.change.toFixed(2)} ({data.changePercent >= 0 ? '+' : ''}{data.changePercent.toFixed(2)}%)
+          {/* KPI Cards */}
+          <div className="op-kpi-strip">
+            <div className="op-kpi-card op-panel">
+              <div className="op-kpi-label">Stock Price &mdash; {data.symbol}</div>
+              <div className="op-kpi-value">
+                ${data.underlyingPrice?.toFixed(2)}
+                <span className={`op-kpi-change ${data.change >= 0 ? 'pos' : 'neg'}`}>
+                  {data.change >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+                  {data.change >= 0 ? '+' : ''}{data.change?.toFixed(2)}
                 </span>
               </div>
-              <span className="kpi-sub">{data.name}</span>
+              <div className="op-kpi-meta">{data.name}</div>
             </div>
 
-            <div className="kpi-card glass-panel">
-              <span className="kpi-label">Active Date &amp; DTE</span>
-              <div className="kpi-value-row">
-                <span className="kpi-main-val">
-                  {dateMode === 'RANGE' ? `${startDate || 'Start'} to ${endDate || 'End'}` : (data.selectedExpiration?.formatted || data.selectedExpiration?.dateStr)}
-                </span>
+            <div className="op-kpi-card op-panel">
+              <div className="op-kpi-label">Contracts Found</div>
+              <div className="op-kpi-value">{filteredContracts.length.toLocaleString()}</div>
+              <div className="op-kpi-meta">
+                {dateMode === 'RANGE'
+                  ? `${startDate || '—'} to ${endDate || '—'}`
+                  : data.selectedExpiration?.formatted || data.selectedExpiration?.dateStr || '—'}
               </div>
-              <span className="kpi-sub badge-sub">
-                {filteredContracts.length} Option Contracts Found
-              </span>
             </div>
 
-            <div className="kpi-card glass-panel">
-              <span className="kpi-label">Put / Call Volume Ratio</span>
-              <div className="kpi-value-row">
-                <span className="kpi-main-val">{data.summary?.pcVolumeRatio ?? '—'}</span>
-                <span className="kpi-icon-badge"><BarChart2 size={16} /></span>
+            <div className="op-kpi-card op-panel">
+              <div className="op-kpi-label">Put / Call Volume Ratio</div>
+              <div className="op-kpi-value">
+                {data.summary?.pcVolumeRatio ?? '—'}
+                <BarChart2 size={16} style={{ color: 'var(--op-muted)', marginLeft: 4 }} />
               </div>
-              <span className="kpi-sub">
-                Calls: {(data.summary?.totalCallVolume || 0).toLocaleString()} | Puts: {(data.summary?.totalPutVolume || 0).toLocaleString()}
-              </span>
+              <div className="op-kpi-meta">
+                Calls: {(data.summary?.totalCallVolume || 0).toLocaleString()} &nbsp;&middot;&nbsp; Puts: {(data.summary?.totalPutVolume || 0).toLocaleString()}
+              </div>
             </div>
 
-            <div className="kpi-card glass-panel">
-              <span className="kpi-label">Max Pain Estimate</span>
-              <div className="kpi-value-row">
-                <span className="kpi-main-val">${typeof data.summary?.maxPain === 'number' ? data.summary.maxPain.toFixed(2) : '—'}</span>
-                <span className="kpi-icon-badge"><TrendingUp size={16} /></span>
+            <div className="op-kpi-card op-panel">
+              <div className="op-kpi-label">Max Pain Estimate</div>
+              <div className="op-kpi-value">
+                {typeof data.summary?.maxPain === 'number' ? `$${data.summary.maxPain.toFixed(2)}` : '—'}
+                <TrendingUp size={16} style={{ color: 'var(--op-muted)', marginLeft: 4 }} />
               </div>
-              <span className="kpi-sub">Min loss strike price</span>
+              <div className="op-kpi-meta">Min-loss strike for option sellers</div>
             </div>
-          </section>
+          </div>
 
-          {/* Primary CSV Download Banner */}
-          <section className="csv-download-banner glass-panel">
-            <div className="csv-banner-content">
-              <div className="csv-banner-text">
-                <h2>Download Formatted CSV File</h2>
-                <p>
-                  Export <strong>{filteredContracts.length} option contracts</strong> with full Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) into Microsoft Excel or Google Sheets.
-                </p>
+          {/* CSV Download Banner */}
+          <div className="op-csv-banner">
+            <div className="op-csv-banner-left">
+              <h3>Download Options Data as CSV</h3>
+              <p>{filteredContracts.length} contracts &middot; Full Greeks (&Delta;, &Gamma;, &Theta;, &nu;, &rho;) &middot; Excel &amp; Google Sheets ready</p>
+            </div>
+            <div className="op-csv-btns">
+              <button className="op-btn-primary" onClick={() => handleDownload('ALL')}>
+                <Download size={15} /> Download All
+              </button>
+              <button className="op-btn-secondary" onClick={() => handleDownload('CALLS')}>
+                <FileSpreadsheet size={14} /> Calls Only
+              </button>
+              <button className="op-btn-secondary" onClick={() => handleDownload('PUTS')}>
+                <FileSpreadsheet size={14} /> Puts Only
+              </button>
+              <button className="op-btn-secondary" onClick={handleCopy} title="Copy CSV to clipboard">
+                {copied
+                  ? <Check size={14} style={{ color: 'var(--green)' }} />
+                  : <Copy size={14} />}
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="op-filter-bar op-panel">
+            <div className="op-filter-group">
+              <div className="op-filter-group-label">
+                <Sliders size={12} /> Option Type
+                <HelpTooltip text="CALL = right to BUY shares. PUT = right to SELL shares." />
               </div>
+              <div className="op-filter-pills">
+                {[['ALL','All Types'],['CALLS','Calls Only'],['PUTS','Puts Only']].map(([v,l]) => (
+                  <button key={v}
+                    className={`op-filter-pill${typeFilter === v ? ' active' : ''}`}
+                    onClick={() => setTypeFilter(v)}>{l}</button>
+                ))}
+              </div>
+            </div>
 
-              <div className="csv-btn-group">
-                <button
-                  onClick={() => handleDownloadCsv('ALL')}
-                  className="cta-btn download-primary-btn"
-                >
-                  <Download size={18} /> Download Full CSV
+            <div className="op-filter-group">
+              <div className="op-filter-group-label">
+                Moneyness
+                <HelpTooltip text="ITM = option has intrinsic value. OTM = time value only. Near = within 8% of current stock price." />
+              </div>
+              <div className="op-filter-pills">
+                {[['ALL','All Strikes'],['ITM','In Money'],['OTM','Out of Money'],['NEAR','Near Money']].map(([v,l]) => (
+                  <button key={v}
+                    className={`op-filter-pill${moneynessFilter === v ? ' active' : ''}`}
+                    onClick={() => setMoneynessFilter(v)}>{l}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="op-filter-group">
+              <div className="op-filter-group-label">Search Strike / Symbol</div>
+              <input
+                type="text"
+                className="op-strike-search"
+                placeholder="e.g. 190 or AAPL260…"
+                value={strikeSearch}
+                onChange={e => setStrikeSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Options Data Grid */}
+          <div className={`op-grid-wrap op-panel${isExpanded ? ' op-grid-expanded' : ''}`}>
+            <div className="op-grid-header">
+              <div className="op-grid-title">
+                <FileSpreadsheet size={15} />
+                Options Chain
+                <span className="op-grid-count">{filteredContracts.length} rows</span>
+                <span className="op-grid-hint">Drag column edges to resize</span>
+              </div>
+              <div className="op-grid-actions">
+                <button className="op-grid-btn" onClick={() => setColWidths(DEFAULT_COL_WIDTHS)}>
+                  <RotateCcw size={12} /> Reset Cols
                 </button>
-
-                <button
-                  onClick={() => handleDownloadCsv('CALLS')}
-                  className="secondary-btn download-sec-btn"
-                >
-                  <FileSpreadsheet size={16} /> Calls Only
-                </button>
-
-                <button
-                  onClick={() => handleDownloadCsv('PUTS')}
-                  className="secondary-btn download-sec-btn"
-                >
-                  <FileSpreadsheet size={16} /> Puts Only
-                </button>
-
-                <button
-                  onClick={handleCopyCsv}
-                  className="secondary-btn copy-btn"
-                  title="Copy CSV to clipboard"
-                >
-                  {copied ? <Check size={16} className="green-icon" /> : <Copy size={16} />}
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* Table Filters Toolbar */}
-          <section className="table-controls-section glass-panel">
-            <div className="filter-toolbar">
-              <div className="filter-group">
-                <div className="variable-label-group">
-                  <span className="filter-label"><Sliders size={14} /> Option Type:</span>
-                  <VariableTooltip text="Filter contracts by CALL (right to buy) or PUT (right to sell)." />
-                </div>
-                <div className="pill-toggle">
-                  <button
-                    onClick={() => { setTypeFilter('ALL'); setViewTab('COMBINED'); }}
-                    className={`pill-btn ${typeFilter === 'ALL' ? 'active' : ''}`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => { setTypeFilter('CALLS'); setViewTab('CALLS'); }}
-                    className={`pill-btn ${typeFilter === 'CALLS' ? 'active' : ''}`}
-                  >
-                    Calls
-                  </button>
-                  <button
-                    onClick={() => { setTypeFilter('PUTS'); setViewTab('PUTS'); }}
-                    className={`pill-btn ${typeFilter === 'PUTS' ? 'active' : ''}`}
-                  >
-                    Puts
-                  </button>
-                </div>
-              </div>
-
-              <div className="filter-group">
-                <div className="variable-label-group">
-                  <span className="filter-label">Moneyness:</span>
-                  <VariableTooltip text="Filter In-The-Money (ITM) options with intrinsic value vs Out-of-The-Money (OTM) options." />
-                </div>
-                <div className="pill-toggle">
-                  <button
-                    onClick={() => setMoneynessFilter('ALL')}
-                    className={`pill-btn ${moneynessFilter === 'ALL' ? 'active' : ''}`}
-                  >
-                    All Strikes
-                  </button>
-                  <button
-                    onClick={() => setMoneynessFilter('ITM')}
-                    className={`pill-btn ${moneynessFilter === 'ITM' ? 'active' : ''}`}
-                  >
-                    In Money (ITM)
-                  </button>
-                  <button
-                    onClick={() => setMoneynessFilter('OTM')}
-                    className={`pill-btn ${moneynessFilter === 'OTM' ? 'active' : ''}`}
-                  >
-                    Out Money (OTM)
-                  </button>
-                  <button
-                    onClick={() => setMoneynessFilter('NEAR')}
-                    className={`pill-btn ${moneynessFilter === 'NEAR' ? 'active' : ''}`}
-                  >
-                    Near Money (±8%)
-                  </button>
-                </div>
-              </div>
-
-              <div className="filter-group search-strike-group">
-                <div className="variable-label-group">
-                  <VariableTooltip text="Type a strike price or OCC contract symbol to filter table rows instantly." />
-                  <input
-                    type="text"
-                    placeholder="Search strike or symbol..."
-                    value={strikeSearch}
-                    onChange={(e) => setStrikeSearch(e.target.value)}
-                    className="strike-search-input"
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Options Chain Output Grid Box with Resizable Columns & Container Scroll */}
-          <section className={`options-table-section glass-panel ${isExpandedBox ? 'expanded-box' : ''}`}>
-            <div className="grid-box-header">
-              <div className="grid-box-title">
-                <FileSpreadsheet size={16} />
-                <h3>Scrollable Options Data Grid ({filteredContracts.length} contracts)</h3>
-                <span className="resize-hint-badge">Drag column headers to resize</span>
-              </div>
-              <div className="grid-box-actions">
-                <button
-                  onClick={resetColumnWidths}
-                  className="grid-tool-btn"
-                  title="Reset column widths to default"
-                >
-                  <RotateCcw size={13} /> Reset Columns
-                </button>
-                <button
-                  onClick={() => setIsExpandedBox(!isExpandedBox)}
-                  className="grid-tool-btn"
-                  title="Toggle container height"
-                >
-                  <Maximize2 size={13} /> {isExpandedBox ? 'Compact View' : 'Expanded View'}
+                <button className="op-grid-btn" onClick={() => setIsExpanded(v => !v)}>
+                  <Maximize2 size={12} /> {isExpanded ? 'Compact' : 'Expand'}
                 </button>
               </div>
             </div>
 
-            <div className="table-responsive-container grid-scroll-box">
-              <table className="options-data-table resizable-table">
+            <div className="op-grid-scroll">
+              <table className="op-table">
                 <thead>
                   <tr>
-                    <th style={{ width: colWidths.contractSymbol }} className="resizable-th">
-                      <span>Contract Symbol</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'contractSymbol')} />
-                    </th>
-                    <th style={{ width: colWidths.optionType }} className="resizable-th">
-                      <span>Type</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'optionType')} />
-                    </th>
-                    <th style={{ width: colWidths.expiration }} className="resizable-th">
-                      <span>Exp Date</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'expiration')} />
-                    </th>
-                    <th style={{ width: colWidths.strike }} className="resizable-th">
-                      <span>Strike</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'strike')} />
-                    </th>
-                    <th style={{ width: colWidths.lastPrice }} className="resizable-th">
-                      <span>Last</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'lastPrice')} />
-                    </th>
-                    <th style={{ width: colWidths.bid }} className="resizable-th">
-                      <span>Bid</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'bid')} />
-                    </th>
-                    <th style={{ width: colWidths.ask }} className="resizable-th">
-                      <span>Ask</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'ask')} />
-                    </th>
-                    <th style={{ width: colWidths.change }} className="resizable-th">
-                      <span>Change</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'change')} />
-                    </th>
-                    <th style={{ width: colWidths.volume }} className="resizable-th">
-                      <span>Volume</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'volume')} />
-                    </th>
-                    <th style={{ width: colWidths.openInterest }} className="resizable-th">
-                      <span>Open Int</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'openInterest')} />
-                    </th>
-                    <th style={{ width: colWidths.iv }} className="resizable-th">
-                      <span>IV</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'iv')} />
-                    </th>
-                    <th style={{ width: colWidths.delta }} className="resizable-th">
-                      <span>Delta (Δ)</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'delta')} />
-                    </th>
-                    <th style={{ width: colWidths.gamma }} className="resizable-th">
-                      <span>Gamma (Γ)</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'gamma')} />
-                    </th>
-                    <th style={{ width: colWidths.theta }} className="resizable-th">
-                      <span>Theta (Θ)</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'theta')} />
-                    </th>
-                    <th style={{ width: colWidths.vega }} className="resizable-th">
-                      <span>Vega (ν)</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'vega')} />
-                    </th>
-                    <th style={{ width: colWidths.itm }} className="resizable-th">
-                      <span>ITM</span>
-                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'itm')} />
-                    </th>
+                    {COLS.map(col => (
+                      <th key={col.key} style={{ width: colWidths[col.key] }}>
+                        <div className="op-th-inner">{col.label}</div>
+                        <div className="op-col-resize" onMouseDown={e => handleColResize(e, col.key)} />
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filteredContracts.length === 0 ? (
                     <tr>
-                      <td colSpan={16} className="empty-table-cell">
-                        No option contracts match the selected date or strike filters. Try expanding your date range above.
+                      <td colSpan={COLS.length}>
+                        <div className="op-empty-state">
+                          <Search size={28} strokeWidth={1.5} />
+                          <p>No contracts match current filters. Try widening your date range or changing the moneyness filter.</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
-                    filteredContracts.map((c) => {
+                    filteredContracts.map(c => {
                       const isCall = c.optionType === 'CALL'
                       return (
                         <tr
                           key={c.contractSymbol || `${c.optionType}-${c.strike}-${c.expiration}`}
-                          className={c.inTheMoney ? 'itm-row' : ''}
+                          className={c.inTheMoney ? 'row-itm' : ''}
                         >
-                          <td className="contract-code-cell">{c.contractSymbol}</td>
+                          <td className="cell-contract">{c.contractSymbol}</td>
                           <td>
-                            <span className={`type-badge ${isCall ? 'call-badge' : 'put-badge'}`}>
+                            <span className={isCall ? 'cell-call-badge' : 'cell-put-badge'}>
                               {c.optionType}
                             </span>
                           </td>
-                          <td className="exp-date-cell">{c.expiration}</td>
-                          <td className="strike-cell">
-                            <strong>${c.strike.toFixed(2)}</strong>
+                          <td>{c.expiration}</td>
+                          <td className="cell-strike">${c.strike?.toFixed(2)}</td>
+                          <td className="cell-price">${c.lastPrice?.toFixed(2)}</td>
+                          <td>${c.bid?.toFixed(2)}</td>
+                          <td>${c.ask?.toFixed(2)}</td>
+                          <td className={c.change >= 0 ? 'cell-pos' : 'cell-neg'}>
+                            {c.change >= 0 ? '+' : ''}{c.change?.toFixed(2)}
                           </td>
-                          <td className="price-cell">${c.lastPrice.toFixed(2)}</td>
-                          <td>${c.bid.toFixed(2)}</td>
-                          <td>${c.ask.toFixed(2)}</td>
-                          <td className={c.change >= 0 ? 'pos-num' : 'neg-num'}>
-                            {c.change >= 0 ? '+' : ''}{c.change.toFixed(2)}
-                          </td>
-                          <td className="num-cell">{(c.volume || 0).toLocaleString()}</td>
-                          <td className="num-cell">{(c.openInterest || 0).toLocaleString()}</td>
-                          <td className="iv-cell">{(c.impliedVolatility * 100).toFixed(1)}%</td>
-                          <td className="greek-cell">{typeof c.delta === 'number' ? c.delta.toFixed(4) : '—'}</td>
-                          <td className="greek-cell">{typeof c.gamma === 'number' ? c.gamma.toFixed(4) : '—'}</td>
-                          <td className="greek-cell">{typeof c.theta === 'number' ? c.theta.toFixed(4) : '—'}</td>
-                          <td className="greek-cell">{typeof c.vega === 'number' ? c.vega.toFixed(4) : '—'}</td>
+                          <td className="cell-vol">{(c.volume || 0).toLocaleString()}</td>
+                          <td className="cell-vol">{(c.openInterest || 0).toLocaleString()}</td>
+                          <td className="cell-iv">{((c.impliedVolatility || 0) * 100).toFixed(1)}%</td>
+                          <td className="cell-greek">{typeof c.delta === 'number' ? c.delta.toFixed(4) : '—'}</td>
+                          <td className="cell-greek">{typeof c.gamma === 'number' ? c.gamma.toFixed(4) : '—'}</td>
+                          <td className="cell-greek">{typeof c.theta === 'number' ? c.theta.toFixed(4) : '—'}</td>
+                          <td className="cell-greek">{typeof c.vega === 'number' ? c.vega.toFixed(4) : '—'}</td>
                           <td>
-                            <span className={`itm-status-badge ${c.inTheMoney ? 'is-itm' : 'is-otm'}`}>
-                              {c.inTheMoney ? 'ITM' : 'OTM'}
-                            </span>
+                            {c.inTheMoney
+                              ? <span className="cell-itm-badge">ITM</span>
+                              : <span className="cell-otm-badge">OTM</span>}
                           </td>
                         </tr>
                       )
@@ -851,84 +530,111 @@ export default function OptionsExtractorPage() {
                 </tbody>
               </table>
             </div>
-          </section>
+          </div>
         </>
       )}
 
-      {/* Field Glossary & Header Definitions Reference Section */}
-      <section className="glossary-section glass-panel">
-        <div
-          className="glossary-toggle-header"
-          onClick={() => setShowGlossary(!showGlossary)}
-        >
-          <div className="glossary-title">
-            <BookOpen size={20} className="glossary-icon" />
-            <h2>Field Definitions &amp; Options Glossary Reference</h2>
+      {/* GLOSSARY */}
+      <div className="op-glossary-panel op-panel">
+        <div className="op-glossary-header" onClick={() => setShowGlossary(v => !v)}>
+          <div className="op-glossary-header-left">
+            <div className="op-glossary-icon-wrap"><BookOpen size={16} /></div>
+            <div className="op-glossary-header-text">
+              <h2>Field Definitions &amp; Quick Glossary</h2>
+              <p>Plain-English explanations of every data column &mdash; perfect for beginners</p>
+            </div>
           </div>
-          <button className="glossary-collapse-btn">
-            {showGlossary ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <button className="op-glossary-toggle">
+            {showGlossary ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
         </div>
 
         {showGlossary && (
-          <div className="glossary-content">
-            <div className="glossary-top-bar">
-              <p className="glossary-intro">
-                Understand all data metrics and Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) exported in your CSV files:
+          <>
+            <div className="op-glossary-divider" />
+            <div className="op-glossary-top">
+              <p className="op-glossary-intro">
+                Understand all columns in the grid and CSV export &mdash; including all five Option Greeks.
               </p>
-              <Link to="/field-guide" className="full-dictionary-link">
-                <BookOpen size={14} /> Open Full Field Dictionary &amp; Examples Page &rarr;
+              <Link to="/field-guide" className="op-glossary-full-link">
+                <BookOpen size={13} /> Full Field Guide with Examples &rarr;
               </Link>
             </div>
-
-            <div className="glossary-grid">
-              {HEADER_GLOSSARY.map((item) => (
-                <div key={item.key} className="glossary-card">
-                  <div className="glossary-card-header">
-                    <strong>{item.label}</strong>
-                    <span className="glossary-tag">{item.short}</span>
+            <div className="op-glossary-grid">
+              {GLOSSARY_ITEMS.map(item => (
+                <div key={item.key} className="op-glossary-item">
+                  <div className="op-glossary-item-top">
+                    <span className="op-glossary-item-title">{item.title}</span>
+                    <span className="op-glossary-item-tag">{item.tag}</span>
                   </div>
-                  <p>{item.description}</p>
+                  <p className="op-glossary-item-desc">{item.desc}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </>
         )}
-      </section>
+      </div>
 
-      <AdSlot id="options-inline-mid" />
+      <div className="op-ad-slot"><AdSlot id="options-inline-mid" /></div>
 
-      {/* Educational & How-To Section */}
-      <section className="options-guide-section glass-panel">
-        <div className="guide-header">
-          <HelpCircle size={20} className="guide-icon" />
-          <h2>How to Import Options CSV Data into Excel &amp; Google Sheets</h2>
+      {/* HOW TO IMPORT */}
+      <div className="op-howto-panel op-panel">
+        <div className="op-howto-panel-header">
+          <FileSpreadsheet size={18} />
+          <h2>How to Import Options CSV into Excel &amp; Google Sheets</h2>
         </div>
-
-        <div className="guide-grid">
-          <div className="guide-card">
-            <h3><FileSpreadsheet size={16} /> Importing into Microsoft Excel</h3>
-            <ol className="guide-steps">
-              <li>Click <strong>Download Full CSV</strong> above to save the <code>.csv</code> file.</li>
-              <li>Open <strong>Microsoft Excel</strong> and click <strong>File &gt; Open</strong> to select the downloaded file.</li>
-              <li>Alternatively, go to the <strong>Data</strong> tab, select <strong>From Text/CSV</strong>, choose your file, and click <strong>Load</strong>.</li>
-              <li>Excel automatically formats columns for Strike, Bid, Ask, Volume, Open Interest, IV, Delta, Gamma, Theta, Vega, and Rho.</li>
-            </ol>
+        <div className="op-howto-grid">
+          <div className="op-howto-card">
+            <div className="op-howto-card-title">
+              <FileSpreadsheet size={16} style={{ color: 'var(--teal)' }} /> Microsoft Excel
+            </div>
+            <div className="op-howto-steps">
+              <div className="op-howto-step">
+                <span className="op-step-num">1</span>
+                <span className="op-step-text">Click <strong>Download All</strong> above to save the <code>.csv</code> file.</span>
+              </div>
+              <div className="op-howto-step">
+                <span className="op-step-num">2</span>
+                <span className="op-step-text">Open <strong>Microsoft Excel</strong> &rarr; <strong>File &rsaquo; Open</strong> &rarr; select the downloaded file.</span>
+              </div>
+              <div className="op-howto-step">
+                <span className="op-step-num">3</span>
+                <span className="op-step-text">Or use the <strong>Data</strong> tab &rarr; <strong>From Text/CSV</strong> &rarr; choose file &rarr; <strong>Load</strong>.</span>
+              </div>
+              <div className="op-howto-step">
+                <span className="op-step-num">4</span>
+                <span className="op-step-text">All columns (Strike, Greeks, IV, Volume, OI) are auto-formatted and ready for analysis.</span>
+              </div>
+            </div>
           </div>
 
-          <div className="guide-card">
-            <h3><FileSpreadsheet size={16} /> Importing into Google Sheets</h3>
-            <ol className="guide-steps">
-              <li>Open a blank spreadsheet on <strong>Google Sheets</strong> (sheets.new).</li>
-              <li>Click <strong>File &gt; Import</strong>, then navigate to the <strong>Upload</strong> tab.</li>
-              <li>Drag and drop the downloaded options CSV file.</li>
-              <li>Select <strong>Import location: Insert new sheet(s)</strong> and keep <strong>Separator type: Detect automatically</strong>, then click <strong>Import data</strong>.</li>
-            </ol>
+          <div className="op-howto-card">
+            <div className="op-howto-card-title">
+              <FileSpreadsheet size={16} style={{ color: 'var(--blue)' }} /> Google Sheets
+            </div>
+            <div className="op-howto-steps">
+              <div className="op-howto-step">
+                <span className="op-step-num">1</span>
+                <span className="op-step-text">Go to <strong>sheets.new</strong> to open a blank Google Sheet.</span>
+              </div>
+              <div className="op-howto-step">
+                <span className="op-step-num">2</span>
+                <span className="op-step-text">Click <strong>File &rsaquo; Import</strong> then the <strong>Upload</strong> tab.</span>
+              </div>
+              <div className="op-howto-step">
+                <span className="op-step-num">3</span>
+                <span className="op-step-text">Drag and drop the downloaded options <code>.csv</code> file into the dialog.</span>
+              </div>
+              <div className="op-howto-step">
+                <span className="op-step-num">4</span>
+                <span className="op-step-text">Choose <strong>Insert new sheet</strong>, keep <strong>Detect automatically</strong>, click <strong>Import data</strong>.</span>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <AdSlot id="options-inline-bottom" />
+      <div className="op-ad-slot"><AdSlot id="options-inline-bottom" /></div>
     </div>
   )
 }

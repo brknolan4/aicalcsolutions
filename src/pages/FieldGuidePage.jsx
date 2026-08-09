@@ -1,4 +1,5 @@
 import { BookOpen, Check, FileSpreadsheet, HelpCircle, Info, Sliders, TrendingUp, Zap } from 'lucide-react'
+import '../options.css'
 import { Link } from 'react-router-dom'
 import AdSlot from '../components/AdSlot'
 import Seo from '../components/Seo'
@@ -189,7 +190,7 @@ export default function FieldGuidePage() {
   }
 
   return (
-    <div className="app-wrapper field-guide-container">
+    <div>
       <Seo
         title="Stock Options Field Guide & Dictionary: Option Greeks & Data Headers Explained"
         description="Comprehensive stock options field dictionary. Detailed descriptions and real-world examples for Contract Symbols, Volume, Open Interest, IV, Delta, Gamma, Theta, Vega, and Rho."
@@ -197,74 +198,57 @@ export default function FieldGuidePage() {
         schema={seoSchema}
       />
 
-      {/* Hero Header */}
-      <section className="landing-hero guide-page-hero">
-        <span className="hero-eyebrow">
-          <BookOpen size={14} /> Comprehensive Field Dictionary & Reference Guide
-        </span>
-        <h1 className="hero-headline">
-          Stock Options <em>Field Guide</em> & Definitions
-        </h1>
-        <p className="hero-sub">
-          Detailed explanations, real-world numerical examples, and mathematical formulas for every data field, metric, and Option Greek ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) exported in your CSV downloads.
-        </p>
-
-        <div className="hero-cta-group">
-          <Link to="/" className="cta-btn cta-link">
-            <FileSpreadsheet size={16} /> Open Options Extractor Tool
+      {/* Hero */}
+      <section className="fg-hero op-hero">
+        <div className="op-eyebrow"><BookOpen size={12} /> Comprehensive Field Dictionary &amp; Reference Guide</div>
+        <h1>Stock Options <em style={{ fontStyle:'normal', background:'linear-gradient(120deg,#00d4aa,#3b82f6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Field Guide</em></h1>
+        <p>Plain-English explanations, real-world numerical examples, and formulas for every data column and Option Greek (&Delta;, &Gamma;, &Theta;, &nu;, &rho;) exported in your CSV downloads.</p>
+        <div style={{ marginTop: '1.25rem' }}>
+          <Link to="/" className="op-btn-primary" style={{ display:'inline-flex', alignItems:'center', gap:'0.5rem', textDecoration:'none', borderRadius:'12px', padding:'0.65rem 1.3rem', background:'linear-gradient(135deg,#00d4aa,#00b892)', color:'#0a0e1a', fontWeight:'800', fontSize:'0.88rem' }}>
+            <FileSpreadsheet size={15} /> Open Options Extractor
           </Link>
         </div>
       </section>
 
-      {/* Field Glossary Cards */}
-      <section className="field-guide-grid-section glass-panel">
-        <div className="guide-section-intro">
-          <h2>Option Output Headers & Greeks Explained</h2>
-          <p>Click any topic below to view full details, breakdown, and practical examples.</p>
-        </div>
+      {/* Field Cards */}
+      <div className="fg-main">
+        <div className="fg-section-title"><BookOpen size={16} /> Option Output Headers &amp; Greeks Explained</div>
 
-        <div className="field-cards-stack">
-          {FIELD_DEFINITIONS.map((f) => (
-            <div key={f.key} className="field-detail-card" id={f.key}>
-              <div className="field-card-top">
-                <div className="field-title-badge">
-                  <h3>{f.title}</h3>
-                  <span className="category-pill">{f.category}</span>
-                </div>
-                <span className="symbol-tag">{f.symbol}</span>
+        {FIELD_DEFINITIONS.map((f) => (
+          <div key={f.key} className="fg-card" id={f.key}>
+            <div className="fg-card-header">
+              <div className="fg-card-title-group">
+                <span className="fg-card-title">{f.title}</span>
+                <span className="fg-card-category">{f.category}</span>
+                <span className="fg-card-symbol">{f.symbol}</span>
               </div>
-
-              <p className="field-short">{f.shortDesc}</p>
-              <p className="field-full">{f.fullDesc}</p>
-
-              {f.breakdown && (
-                <div className="field-breakdown-box">
-                  <strong>Structure Breakdown:</strong>
-                  <ul>
-                    {f.breakdown.map((b, idx) => (
-                      <li key={idx}>
-                        <code>{b.part}</code> &mdash; {b.meaning}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {f.example && (
-                <div className="field-example-box">
-                  <div className="example-header">
-                    <Zap size={14} className="zap-icon" />
-                    <strong>Real-World Numerical Example:</strong>
-                  </div>
-                  <p>{f.example}</p>
-                </div>
-              )}
             </div>
-          ))}
-        </div>
-      </section>
 
-      <AdSlot id="guide-inline-bottom" />
+            <p className="fg-short-desc">{f.shortDesc}</p>
+            <p className="fg-full-desc">{f.fullDesc}</p>
+
+            {f.breakdown && (
+              <div className="fg-breakdown">
+                <div className="fg-breakdown-title">Structure Breakdown</div>
+                <ul className="fg-breakdown-list">
+                  {f.breakdown.map((b, idx) => (
+                    <li key={idx}><code>{b.part}</code> &mdash; {b.meaning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {f.example && (
+              <div className="fg-example">
+                <div className="fg-example-header"><Zap size={12} /> Real-World Example</div>
+                <p className="fg-example-text">{f.example}</p>
+              </div>
+            )}
+          </div>
+        ))}
+
+        <div className="op-ad-slot"><AdSlot id="guide-inline-bottom" /></div>
+      </div>
     </div>
   )
 }
