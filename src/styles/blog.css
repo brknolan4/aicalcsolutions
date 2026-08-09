@@ -1,0 +1,40 @@
+.blog-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.blog-card {
+  display: grid;
+  gap: 0.7rem;
+  text-decoration: none;
+  color: inherit;
+  padding: 1rem 1.05rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+}
+
+.blog-card p,
+.blog-card small,
+.blog-meta,
+.blog-excerpt,
+.blog-body p {
+  color: var(--text-secondary);
+}
+
+.blog-card h3,
+.blog-article h1,
+.blog-body h2 {
+  margin: 0;
+}
+
+.blog-article {
+  display: grid;
+  gap: 1rem;
+}
+
+.blog-body {
+  display: grid;
+  gap: 1rem;
+}

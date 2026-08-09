@@ -1,0 +1,58 @@
+export const blogPosts = [
+  {
+    slug: 'chatgpt-plus-vs-api-cost-2026',
+    title: 'ChatGPT Plus vs API Cost in 2026: Which Is Cheaper?',
+    excerpt: 'A practical breakdown of when ChatGPT Plus beats API billing and when direct usage stays cheaper for developers and power users.',
+    datePublished: '2026-04-14',
+    dateModified: '2026-04-14',
+    category: 'Pricing',
+    description: 'Compare ChatGPT Plus with API pricing using real monthly workload assumptions for coding, research, and content workflows.',
+    body: [
+      { type: 'p', text: 'For light and moderate usage, ChatGPT Plus often feels cheaper because the monthly price is fixed and easy to understand. The tradeoff is that API pricing stays more efficient when your actual usage is small and predictable.' },
+      { type: 'h2', text: 'When ChatGPT Plus wins' },
+      { type: 'p', text: 'If you open many sessions a day, ask for long outputs, and do not want to think about token math, Plus removes friction. It is especially attractive for general users who value convenience over strict cost control.' },
+      { type: 'h2', text: 'When the API wins' },
+      { type: 'p', text: 'If your monthly workload is light, the API is usually cheaper. Developers also benefit from API flexibility because they can automate prompts, call models from tools, and track actual consumption directly.' },
+      { type: 'h2', text: 'Best workflow' },
+      { type: 'p', text: 'Use the subscription planner to estimate your monthly API spend first. If your real usage is consistently below the monthly Plus price, direct API billing is the cleaner choice.' },
+    ],
+  },
+  {
+    slug: 'claude-pro-vs-api-cost-2026',
+    title: 'Claude Pro vs API Cost in 2026: What Heavy Users Should Know',
+    excerpt: 'Claude Pro feels simple, but the API can still be cheaper depending on how often you run long-context sessions and tool-heavy coding workflows.',
+    datePublished: '2026-04-14',
+    dateModified: '2026-04-14',
+    category: 'Pricing',
+    description: 'A practical comparison of Claude Pro and Claude API costs for long-context users, coders, and research-heavy workflows.',
+    body: [
+      { type: 'p', text: 'Claude Pro is attractive because it removes usage anxiety for many users, but the API remains important when you want exact billing and direct integration into coding tools or internal systems.' },
+      { type: 'h2', text: 'Long-context work changes the equation' },
+      { type: 'p', text: 'Claude is often chosen for long-context writing, research, and repository analysis. Those workflows can be expensive with direct API billing when prompts are huge, but they also benefit from precise measurement.' },
+      { type: 'h2', text: 'Why the API still matters' },
+      { type: 'p', text: 'API usage is more transparent. Teams that need to budget, monitor, or automate Claude requests often prefer direct API pricing even if a subscription feels simpler on paper.' },
+      { type: 'h2', text: 'Practical recommendation' },
+      { type: 'p', text: 'Estimate your monthly sessions and average token load. If your work is occasional but deep, the API may still be cheaper. If you are in Claude every day for long sessions, Pro or Max can make more sense.' },
+    ],
+  },
+  {
+    slug: 'how-many-tokens-is-1000-words',
+    title: 'How Many Tokens Is 1,000 Words? A Practical Guide for AI Pricing',
+    excerpt: 'A simple guide to translating word count, prompt length, and AI output size into tokens so you can estimate cost faster.',
+    datePublished: '2026-04-14',
+    dateModified: '2026-04-14',
+    category: 'Tokens',
+    description: 'Learn how words, characters, and prompts map to tokens and why that matters for AI cost planning.',
+    body: [
+      { type: 'p', text: 'A common planning shortcut is roughly 4 characters per token. That is not exact, but it is useful enough for budgeting and quick comparisons across models.' },
+      { type: 'h2', text: 'Why words and tokens are different' },
+      { type: 'p', text: 'Words are for people. Tokens are how models price input and output. A 1,000-word article may compress or expand differently depending on punctuation, formatting, and code blocks.' },
+      { type: 'h2', text: 'A practical rule of thumb' },
+      { type: 'p', text: 'For fast estimation, assume 1,000 words is often around 1,300 to 1,700 tokens depending on the text. Code, JSON, and structured content usually change that relationship.' },
+      { type: 'h2', text: 'Use a token estimator, not guesswork' },
+      { type: 'p', text: 'If you are comparing model costs, use the token calculator with real sample prompts and expected outputs. It gives you a more honest estimate than word count alone.' },
+    ],
+  },
+]
+
+export const blogPostBySlug = Object.fromEntries(blogPosts.map((post) => [post.slug, post]))

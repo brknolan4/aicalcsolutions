@@ -1,0 +1,28 @@
+.compare-page .page-shell,
+.compare-wide-surface {
+  max-width: 100%;
+}
+
+.compare-section-toggle {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.02);
+  padding: 1rem;
+}
+
+.compare-section-toggle summary {
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.compare-table-wrap {
+  overflow-x: auto;
+}
+
+.compare-grid .row-label {
+  position: sticky;
+  left: 0;
+  background: rgba(15,17,26,0.96);
+  z-index: 2;
+}
