@@ -102,10 +102,17 @@ export default function OptionsExtractorPage() {
     window.addEventListener('mouseup', up)
   }
 
-  const fetchOptions = async (sym, expDate = '') => {
+  const fetchOptions = async (sym, expDate = '', rangeOverride = null) => {
     setLoading(true); setError(null)
     try {
-      const json = await fetchOptionsData(sym, expDate)
+      // In range mode, pass a dateRange object so the engine fetches all
+      // expiration dates within the range in parallel and merges contracts.
+      const range = rangeOverride
+        || (dateMode === 'RANGE' && (startDate || endDate)
+            ? { startDate: startDate || expDate, endDate: endDate || expDate }
+            : null)
+
+      const json = await fetchOptionsData(sym, range ? '' : expDate, range)
       setData(json)
       if (json.selectedExpiration?.dateStr && !selectedDate) {
         setSelectedDate(json.selectedExpiration.dateStr)
@@ -128,12 +135,20 @@ export default function OptionsExtractorPage() {
     const clean = inputSymbol.trim().toUpperCase()
     if (!clean) return
     setSymbol(clean)
-    fetchOptions(clean, dateMode === 'SINGLE' ? selectedDate : startDate)
+    if (dateMode === 'RANGE') {
+      fetchOptions(clean, '', { startDate, endDate })
+    } else {
+      fetchOptions(clean, selectedDate)
+    }
   }
 
   const handlePreset = ticker => {
     setInputSymbol(ticker); setSymbol(ticker)
-    fetchOptions(ticker, dateMode === 'SINGLE' ? selectedDate : startDate)
+    if (dateMode === 'RANGE') {
+      fetchOptions(ticker, '', { startDate, endDate })
+    } else {
+      fetchOptions(ticker, selectedDate)
+    }
   }
 
   const handleSingleDate = e => { setSelectedDate(e.target.value); fetchOptions(symbol, e.target.value) }
@@ -158,7 +173,12 @@ export default function OptionsExtractorPage() {
         if (!String(c.strike).includes(q) && !(c.contractSymbol || '').toLowerCase().includes(q)) return false
       }
       return true
-    }).sort((a, b) => a.strike - b.strike || a.optionType.localeCompare(b.optionType))
+    }).sort((a, b) => {
+      // Sort by expiration date first, then by strike, then call before put
+      if (a.expiration !== b.expiration) return a.expiration.localeCompare(b.expiration)
+      if (a.strike !== b.strike) return a.strike - b.strike
+      return a.optionType.localeCompare(b.optionType)
+    })
   }, [data, typeFilter, moneynessFilter, strikeSearch, dateMode, startDate, endDate])
 
   const handleDownload = (type = 'ALL') => {
@@ -299,7 +319,7 @@ export default function OptionsExtractorPage() {
                   <input type="date" id="end-date" className="op-date-input"
                     value={endDate} onChange={e => setEndDate(e.target.value)} />
                 </div>
-                <button className="op-apply-btn" onClick={() => fetchOptions(symbol, startDate)} disabled={loading}>
+                <button className="op-apply-btn" onClick={() => fetchOptions(symbol, '', { startDate, endDate })} disabled={loading}>
                   <RefreshCw size={14} className={loading ? 'spin' : ''} /> Apply Range
                 </button>
               </>
