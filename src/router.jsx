@@ -13,6 +13,7 @@ import ContactPage from './pages/ContactPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import OptionsExtractorPage from './pages/OptionsExtractorPage'
 import FieldGuidePage from './pages/FieldGuidePage'
+import PcRatioPage from './pages/PcRatioPage'
 
 export default function AppRoutes() {
   return (
@@ -48,6 +49,9 @@ export default function AppRoutes() {
         />
         <Route path="options-extractor" element={<OptionsExtractorPage />} />
         <Route path="tools/options-extractor" element={<OptionsExtractorPage />} />
+        <Route path="pc-ratio" element={<PcRatioPage />} />
+        <Route path="index-pc-ratio" element={<PcRatioPage />} />
+        <Route path="tools/pc-ratio" element={<PcRatioPage />} />
         <Route path="field-guide" element={<FieldGuidePage />} />
         <Route path="fields" element={<FieldGuidePage />} />
         <Route path="blog" element={<BlogIndexPage />} />

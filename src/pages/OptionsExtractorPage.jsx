@@ -128,7 +128,13 @@ export default function OptionsExtractorPage() {
     }
   }
 
-  useEffect(() => { fetchOptions('AAPL') }, [])
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const urlTicker = (params.get('ticker') || params.get('symbol') || 'AAPL').trim().toUpperCase()
+    setInputSymbol(urlTicker)
+    setSymbol(urlTicker)
+    fetchOptions(urlTicker)
+  }, [])
 
   const handleSubmit = e => {
     e.preventDefault()

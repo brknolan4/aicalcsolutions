@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BookOpen, FileSpreadsheet } from 'lucide-react'
+import { BookOpen, FileSpreadsheet, TrendingUp } from 'lucide-react'
 import '../options.css'
 
 export default function SiteHeader() {
@@ -19,6 +19,9 @@ export default function SiteHeader() {
         <nav className="op-nav" aria-label="Primary navigation">
           <NavLink to="/" end className={({ isActive }) => `op-nav-link${isActive ? ' active' : ''}`}>
             <FileSpreadsheet size={15} /> Options Extractor
+          </NavLink>
+          <NavLink to="/pc-ratio" className={({ isActive }) => `op-nav-link${isActive ? ' active' : ''}`}>
+            <TrendingUp size={15} /> P/C Ratios
           </NavLink>
           <NavLink to="/field-guide" className={({ isActive }) => `op-nav-link${isActive ? ' active' : ''}`}>
             <BookOpen size={15} /> Field Guide
