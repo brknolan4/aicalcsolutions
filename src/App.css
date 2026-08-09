@@ -2208,4 +2208,347 @@
   color: #a78bfa;
 }
 
+/* Options Brand Logo Mark */
+.options-mark {
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%) !important;
+  color: #fff !important;
+}
+
+/* Tooltip & Question Icons */
+.variable-label-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.variable-tooltip-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.variable-tooltip-wrapper:hover {
+  color: var(--accent-primary);
+}
+
+.question-help-icon {
+  opacity: 0.75;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  white-space: normal;
+  width: 230px;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
+
+/* Resizable Columns & Output Grid Box */
+.grid-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.02);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.grid-box-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid-box-title h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.resize-hint-badge {
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.grid-box-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid-tool-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.grid-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.grid-scroll-box {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.expanded-box .grid-scroll-box {
+  max-height: 800px;
+}
+
+.resizable-table {
+  table-layout: fixed;
+}
+
+.resizable-th {
+  position: relative;
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resizable-th span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 20;
+}
+
+.col-resizer:hover, .col-resizer:active {
+  background: var(--accent-primary);
+}
+
+/* Field Guide Page Styling */
+.field-guide-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.guide-page-hero {
+  text-align: center;
+  padding: 3rem 1.5rem 2rem;
+}
+
+.field-guide-grid-section {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.guide-section-intro h2 {
+  font-size: 1.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.guide-section-intro p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.field-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field-detail-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: border-color 0.2s ease;
+}
+
+.field-detail-card:hover {
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.field-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.field-title-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.field-title-badge h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.category-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-primary);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.symbol-tag {
+  font-family: monospace;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #a78bfa;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.field-short {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.field-full {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.field-breakdown-box {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.84rem;
+  margin-top: 0.25rem;
+}
+
+.field-breakdown-box ul {
+  margin-top: 0.35rem;
+  padding-left: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.field-breakdown-box code {
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.field-example-box {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+}
+
+.example-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #34d399;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.zap-icon { color: #34d399; }
+
+.field-example-box p {
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.glossary-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.full-dictionary-link {
+  color: var(--accent-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+}
+
+.full-dictionary-link:hover {
+  text-decoration: underline;
+}
+
+.field-guide-link {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--accent-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.field-guide-link:hover {
+  text-decoration: underline;
+}
+
+
 

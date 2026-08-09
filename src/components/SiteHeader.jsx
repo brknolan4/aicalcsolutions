@@ -1,13 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Calculator, BookOpen, BarChart3, CreditCard, Home, FileSpreadsheet } from 'lucide-react'
+import { FileSpreadsheet, BookOpen, Download } from 'lucide-react'
 
 const navItems = [
-  { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/options-extractor', label: 'Options Extractor', icon: FileSpreadsheet },
-  { to: '/token-calculator', label: 'Token Calculator', icon: Calculator },
-  { to: '/compare', label: 'Compare', icon: BarChart3 },
-  { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
-  { to: '/blog', label: 'Blog', icon: BookOpen },
+  { to: '/', label: 'Options Extractor', icon: FileSpreadsheet, end: true },
+  { to: '/field-guide', label: 'Field Guide & Examples', icon: BookOpen },
 ]
 
 export default function SiteHeader() {
@@ -15,10 +11,10 @@ export default function SiteHeader() {
     <header className="site-header-shell">
       <div className="site-header">
         <NavLink to="/" className="site-brand" end>
-          <span className="site-brand-mark">AI</span>
+          <span className="site-brand-mark options-mark">OP</span>
           <span>
-            <strong>AI Calc Solutions</strong>
-            <small>AI pricing and token economics</small>
+            <strong>Stock Options Extractor</strong>
+            <small>Options Data &amp; CSV Downloader</small>
           </span>
         </NavLink>
 

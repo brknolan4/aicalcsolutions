@@ -13,11 +13,14 @@ import {
   FileSpreadsheet,
   HelpCircle,
   Info,
+  Maximize2,
   RefreshCw,
+  RotateCcw,
   Search,
   Sliders,
   TrendingUp,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import AdSlot from '../components/AdSlot'
 import Seo from '../components/Seo'
 import { downloadOptionsCsv, generateOptionsCsv } from '../lib/optionsCsvExporter'
@@ -26,7 +29,46 @@ import { absoluteUrl, faqSchema, webAppSchema } from '../lib/seo'
 
 const POPULAR_TICKERS = ['AAPL', 'SPY', 'TSLA', 'NVDA', 'QQQ', 'MSFT', 'AMZN', 'AMD', 'META', 'GOOGL']
 
-// Detailed header definitions for glossary & tooltips
+// Column width defaults for resizable grid
+const DEFAULT_COL_WIDTHS = {
+  contractSymbol: 185,
+  optionType: 80,
+  expiration: 105,
+  strike: 95,
+  lastPrice: 85,
+  bid: 80,
+  ask: 80,
+  change: 85,
+  volume: 90,
+  openInterest: 95,
+  iv: 85,
+  delta: 85,
+  gamma: 85,
+  theta: 85,
+  vega: 85,
+  itm: 70,
+}
+
+// Tooltip helper component
+function VariableTooltip({ text }) {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span
+      className="variable-tooltip-wrapper"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+      onClick={() => setVisible(!visible)}
+      role="button"
+      tabIndex={0}
+      aria-label="Field explanation"
+    >
+      <HelpCircle size={14} className="question-help-icon" />
+      {visible && <span className="tooltip-bubble">{text}</span>}
+    </span>
+  )
+}
+
+// Detailed header definitions for glossary
 const HEADER_GLOSSARY = [
   {
     key: 'contractSymbol',
@@ -136,11 +178,39 @@ export default function OptionsExtractorPage() {
   const [copied, setCopied] = useState(false)
   const [showGlossary, setShowGlossary] = useState(true)
 
+  // Resizable columns state
+  const [colWidths, setColWidths] = useState(DEFAULT_COL_WIDTHS)
+  const [isExpandedBox, setIsExpandedBox] = useState(false)
+
   // Filters
   const [typeFilter, setTypeFilter] = useState('ALL') // ALL, CALLS, PUTS
   const [moneynessFilter, setMoneynessFilter] = useState('ALL') // ALL, ITM, OTM, NEAR
   const [strikeSearch, setStrikeSearch] = useState('')
   const [viewTab, setViewTab] = useState('COMBINED')
+
+  const handleMouseDownResizer = (e, colKey) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = colWidths[colKey] || 90
+
+    const onMouseMove = (moveEvent) => {
+      const diff = moveEvent.clientX - startX
+      const newWidth = Math.max(50, startWidth + diff)
+      setColWidths((prev) => ({ ...prev, [colKey]: newWidth }))
+    }
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  const resetColumnWidths = () => {
+    setColWidths(DEFAULT_COL_WIDTHS)
+  }
 
   const fetchOptions = async (targetSymbol, expDate = '') => {
     setLoading(true)
@@ -285,43 +355,54 @@ export default function OptionsExtractorPage() {
       {/* Hero Header */}
       <section className="landing-hero options-hero">
         <span className="hero-eyebrow">
-          <FileSpreadsheet size={14} /> Free Options Tool · Calendar Date Picker · Excel CSV Export
+          <FileSpreadsheet size={14} /> Free Options Data Extractor · Resizable Columns &amp; CSV Export
         </span>
         <h1 className="hero-headline">
-          Stock Options <em>Data Extractor</em> & CSV Engine
+          Stock Options <em>Data Extractor</em> & CSV Downloader
         </h1>
         <p className="hero-sub">
-          Extract complete options chains for any stock symbol into clean CSV files formatted for Microsoft Excel & Google Sheets. Includes full Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) and custom date range filters.
+          Extract complete options chains for any US stock symbol into clean CSV files formatted for Microsoft Excel & Google Sheets. Features resizable data grid, calendar date range pickers, and full Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$).
         </p>
       </section>
 
-      {/* Step 1: Symbol & Controls Panel */}
+      {/* Input Variable Control Panel */}
       <section className="options-control-section glass-panel">
         <div className="section-step-header">
           <span className="step-number">1</span>
-          <h2>Select Stock Symbol & Expiration Dates</h2>
+          <h2>Set Input Variables &amp; Parameters</h2>
+          <Link to="/field-guide" className="field-guide-link">
+            <BookOpen size={14} /> View Field Dictionary
+          </Link>
         </div>
 
+        {/* Input Variable: Ticker Symbol */}
         <form onSubmit={handleSymbolSubmit} className="options-search-form">
-          <div className="search-input-group">
-            <Search className="search-icon" size={18} />
-            <input
-              type="text"
-              value={inputSymbol}
-              onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
-              placeholder="Enter ticker (e.g. AAPL, SPY, TSLA, NVDA)"
-              className="symbol-input"
-              maxLength={10}
-            />
-            <button type="submit" className="cta-btn search-submit-btn" disabled={loading}>
-              {loading ? <RefreshCw className="spin-icon" size={16} /> : 'Extract Data'}
-            </button>
+          <div className="variable-field-row">
+            <div className="variable-label-group">
+              <label htmlFor="ticker-input">Stock Symbol / Ticker:</label>
+              <VariableTooltip text="Enter any US equity or ETF ticker symbol (e.g. AAPL for Apple Inc., SPY for S&P 500 ETF, TSLA for Tesla Inc.)." />
+            </div>
+            <div className="search-input-group">
+              <Search className="search-icon" size={18} />
+              <input
+                id="ticker-input"
+                type="text"
+                value={inputSymbol}
+                onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
+                placeholder="Enter ticker (e.g. AAPL, SPY, TSLA, NVDA)"
+                className="symbol-input"
+                maxLength={10}
+              />
+              <button type="submit" className="cta-btn search-submit-btn" disabled={loading}>
+                {loading ? <RefreshCw className="spin-icon" size={16} /> : 'Extract Data'}
+              </button>
+            </div>
           </div>
         </form>
 
         {/* Popular Presets */}
         <div className="preset-row">
-          <span className="preset-label">Popular Symbols:</span>
+          <span className="preset-label">Quick Symbol Presets:</span>
           <div className="preset-badges">
             {POPULAR_TICKERS.map((t) => (
               <button
@@ -335,10 +416,13 @@ export default function OptionsExtractorPage() {
           </div>
         </div>
 
-        {/* Date Selection Controls */}
+        {/* Date Selection Box */}
         <div className="date-selection-box">
           <div className="date-mode-toggle">
-            <span className="control-label"><Calendar size={15} /> Expiration Selection Mode:</span>
+            <div className="variable-label-group">
+              <span className="control-label"><Calendar size={15} /> Expiration Selection Mode:</span>
+              <VariableTooltip text="Select a single Friday expiration date OR use the calendar pickers to extract an entire date range of options." />
+            </div>
             <div className="pill-toggle">
               <button
                 onClick={() => setDateMode('SINGLE')}
@@ -358,7 +442,10 @@ export default function OptionsExtractorPage() {
           {dateMode === 'SINGLE' ? (
             <div className="date-picker-row">
               <div className="picker-item">
-                <label htmlFor="single-date-select">Select Available Expiration:</label>
+                <div className="variable-label-group">
+                  <label htmlFor="single-date-select">Select Available Friday Expiration:</label>
+                  <VariableTooltip text="Options contracts typically expire on Friday afternoons. Select any upcoming expiration date." />
+                </div>
                 {data && data.expirationDates && data.expirationDates.length > 0 ? (
                   <select
                     id="single-date-select"
@@ -386,7 +473,10 @@ export default function OptionsExtractorPage() {
           ) : (
             <div className="date-picker-row date-range-inputs">
               <div className="picker-item">
-                <label htmlFor="start-date-input">From Date (Calendar):</label>
+                <div className="variable-label-group">
+                  <label htmlFor="start-date-input">From Date (Calendar):</label>
+                  <VariableTooltip text="Start date for filtering expiration dates in the calendar control." />
+                </div>
                 <input
                   id="start-date-input"
                   type="date"
@@ -397,7 +487,10 @@ export default function OptionsExtractorPage() {
               </div>
 
               <div className="picker-item">
-                <label htmlFor="end-date-input">To Date (Calendar):</label>
+                <div className="variable-label-group">
+                  <label htmlFor="end-date-input">To Date (Calendar):</label>
+                  <VariableTooltip text="End date for filtering expiration dates in the calendar control." />
+                </div>
                 <input
                   id="end-date-input"
                   type="date"
@@ -436,7 +529,7 @@ export default function OptionsExtractorPage() {
       {loading && !data && (
         <div className="loading-container glass-panel">
           <RefreshCw className="spin-icon large-spinner" size={36} />
-          <p>Extracting options chain data & computing Greeks for <strong>{symbol}</strong>...</p>
+          <p>Extracting options chain data &amp; computing Greeks for <strong>{symbol}</strong>...</p>
         </div>
       )}
 
@@ -458,7 +551,7 @@ export default function OptionsExtractorPage() {
             </div>
 
             <div className="kpi-card glass-panel">
-              <span className="kpi-label">Active Date & DTE</span>
+              <span className="kpi-label">Active Date &amp; DTE</span>
               <div className="kpi-value-row">
                 <span className="kpi-main-val">
                   {dateMode === 'RANGE' ? `${startDate || 'Start'} to ${endDate || 'End'}` : (data.selectedExpiration?.formatted || data.selectedExpiration?.dateStr)}
@@ -538,7 +631,10 @@ export default function OptionsExtractorPage() {
           <section className="table-controls-section glass-panel">
             <div className="filter-toolbar">
               <div className="filter-group">
-                <span className="filter-label"><Sliders size={14} /> Option Type:</span>
+                <div className="variable-label-group">
+                  <span className="filter-label"><Sliders size={14} /> Option Type:</span>
+                  <VariableTooltip text="Filter contracts by CALL (right to buy) or PUT (right to sell)." />
+                </div>
                 <div className="pill-toggle">
                   <button
                     onClick={() => { setTypeFilter('ALL'); setViewTab('COMBINED'); }}
@@ -562,7 +658,10 @@ export default function OptionsExtractorPage() {
               </div>
 
               <div className="filter-group">
-                <span className="filter-label">Moneyness:</span>
+                <div className="variable-label-group">
+                  <span className="filter-label">Moneyness:</span>
+                  <VariableTooltip text="Filter In-The-Money (ITM) options with intrinsic value vs Out-of-The-Money (OTM) options." />
+                </div>
                 <div className="pill-toggle">
                   <button
                     onClick={() => setMoneynessFilter('ALL')}
@@ -592,39 +691,114 @@ export default function OptionsExtractorPage() {
               </div>
 
               <div className="filter-group search-strike-group">
-                <input
-                  type="text"
-                  placeholder="Filter strike or symbol..."
-                  value={strikeSearch}
-                  onChange={(e) => setStrikeSearch(e.target.value)}
-                  className="strike-search-input"
-                />
+                <div className="variable-label-group">
+                  <VariableTooltip text="Type a strike price or OCC contract symbol to filter table rows instantly." />
+                  <input
+                    type="text"
+                    placeholder="Search strike or symbol..."
+                    value={strikeSearch}
+                    onChange={(e) => setStrikeSearch(e.target.value)}
+                    className="strike-search-input"
+                  />
+                </div>
               </div>
             </div>
           </section>
 
-          {/* Options Chain Data Table */}
-          <section className="options-table-section glass-panel">
-            <div className="table-responsive-container">
-              <table className="options-data-table">
+          {/* Options Chain Output Grid Box with Resizable Columns & Container Scroll */}
+          <section className={`options-table-section glass-panel ${isExpandedBox ? 'expanded-box' : ''}`}>
+            <div className="grid-box-header">
+              <div className="grid-box-title">
+                <FileSpreadsheet size={16} />
+                <h3>Scrollable Options Data Grid ({filteredContracts.length} contracts)</h3>
+                <span className="resize-hint-badge">Drag column headers to resize</span>
+              </div>
+              <div className="grid-box-actions">
+                <button
+                  onClick={resetColumnWidths}
+                  className="grid-tool-btn"
+                  title="Reset column widths to default"
+                >
+                  <RotateCcw size={13} /> Reset Columns
+                </button>
+                <button
+                  onClick={() => setIsExpandedBox(!isExpandedBox)}
+                  className="grid-tool-btn"
+                  title="Toggle container height"
+                >
+                  <Maximize2 size={13} /> {isExpandedBox ? 'Compact View' : 'Expanded View'}
+                </button>
+              </div>
+            </div>
+
+            <div className="table-responsive-container grid-scroll-box">
+              <table className="options-data-table resizable-table">
                 <thead>
                   <tr>
-                    <th title="Standardized OCC Option Contract Ticker">Contract Symbol</th>
-                    <th title="CALL (Right to Buy) or PUT (Right to Sell)">Type</th>
-                    <th title="Expiration Date">Exp Date</th>
-                    <th title="Pre-determined Execution Price">Strike</th>
-                    <th title="Last Traded Premium Price">Last</th>
-                    <th title="Highest Buyer Offer">Bid</th>
-                    <th title="Lowest Seller Offer">Ask</th>
-                    <th title="Daily Price Shift ($)">Change</th>
-                    <th title="Contracts Traded Today">Volume</th>
-                    <th title="Active Outstanding Contracts">Open Int</th>
-                    <th title="Implied Volatility %">IV</th>
-                    <th title="Delta (Δ) Price Sensitivity">Delta (Δ)</th>
-                    <th title="Gamma (Γ) Delta Rate of Change">Gamma (Γ)</th>
-                    <th title="Theta (Θ) Daily Time Decay">Theta (Θ)</th>
-                    <th title="Vega (ν) Volatility Sensitivity">Vega (ν)</th>
-                    <th title="In The Money / Out of The Money">ITM</th>
+                    <th style={{ width: colWidths.contractSymbol }} className="resizable-th">
+                      <span>Contract Symbol</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'contractSymbol')} />
+                    </th>
+                    <th style={{ width: colWidths.optionType }} className="resizable-th">
+                      <span>Type</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'optionType')} />
+                    </th>
+                    <th style={{ width: colWidths.expiration }} className="resizable-th">
+                      <span>Exp Date</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'expiration')} />
+                    </th>
+                    <th style={{ width: colWidths.strike }} className="resizable-th">
+                      <span>Strike</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'strike')} />
+                    </th>
+                    <th style={{ width: colWidths.lastPrice }} className="resizable-th">
+                      <span>Last</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'lastPrice')} />
+                    </th>
+                    <th style={{ width: colWidths.bid }} className="resizable-th">
+                      <span>Bid</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'bid')} />
+                    </th>
+                    <th style={{ width: colWidths.ask }} className="resizable-th">
+                      <span>Ask</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'ask')} />
+                    </th>
+                    <th style={{ width: colWidths.change }} className="resizable-th">
+                      <span>Change</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'change')} />
+                    </th>
+                    <th style={{ width: colWidths.volume }} className="resizable-th">
+                      <span>Volume</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'volume')} />
+                    </th>
+                    <th style={{ width: colWidths.openInterest }} className="resizable-th">
+                      <span>Open Int</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'openInterest')} />
+                    </th>
+                    <th style={{ width: colWidths.iv }} className="resizable-th">
+                      <span>IV</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'iv')} />
+                    </th>
+                    <th style={{ width: colWidths.delta }} className="resizable-th">
+                      <span>Delta (Δ)</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'delta')} />
+                    </th>
+                    <th style={{ width: colWidths.gamma }} className="resizable-th">
+                      <span>Gamma (Γ)</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'gamma')} />
+                    </th>
+                    <th style={{ width: colWidths.theta }} className="resizable-th">
+                      <span>Theta (Θ)</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'theta')} />
+                    </th>
+                    <th style={{ width: colWidths.vega }} className="resizable-th">
+                      <span>Vega (ν)</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'vega')} />
+                    </th>
+                    <th style={{ width: colWidths.itm }} className="resizable-th">
+                      <span>ITM</span>
+                      <div className="col-resizer" onMouseDown={(e) => handleMouseDownResizer(e, 'itm')} />
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -681,7 +855,7 @@ export default function OptionsExtractorPage() {
         </>
       )}
 
-      {/* Field Glossary & Header Definitions Section */}
+      {/* Field Glossary & Header Definitions Reference Section */}
       <section className="glossary-section glass-panel">
         <div
           className="glossary-toggle-header"
@@ -689,7 +863,7 @@ export default function OptionsExtractorPage() {
         >
           <div className="glossary-title">
             <BookOpen size={20} className="glossary-icon" />
-            <h2>Field Definitions & Options Glossary Reference</h2>
+            <h2>Field Definitions &amp; Options Glossary Reference</h2>
           </div>
           <button className="glossary-collapse-btn">
             {showGlossary ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -698,9 +872,15 @@ export default function OptionsExtractorPage() {
 
         {showGlossary && (
           <div className="glossary-content">
-            <p className="glossary-intro">
-              Understand all data metrics and Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) exported in your CSV files:
-            </p>
+            <div className="glossary-top-bar">
+              <p className="glossary-intro">
+                Understand all data metrics and Option Greeks ($\Delta$, $\Gamma$, $\Theta$, $\nu$, $\rho$) exported in your CSV files:
+              </p>
+              <Link to="/field-guide" className="full-dictionary-link">
+                <BookOpen size={14} /> Open Full Field Dictionary &amp; Examples Page &rarr;
+              </Link>
+            </div>
+
             <div className="glossary-grid">
               {HEADER_GLOSSARY.map((item) => (
                 <div key={item.key} className="glossary-card">
@@ -722,7 +902,7 @@ export default function OptionsExtractorPage() {
       <section className="options-guide-section glass-panel">
         <div className="guide-header">
           <HelpCircle size={20} className="guide-icon" />
-          <h2>How to Import Options CSV Data into Excel & Google Sheets</h2>
+          <h2>How to Import Options CSV Data into Excel &amp; Google Sheets</h2>
         </div>
 
         <div className="guide-grid">
